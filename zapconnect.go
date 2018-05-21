@@ -1,6 +1,7 @@
 package main
 
 import (
+"flag"
 "fmt"
 "io/ioutil"
 "github.com/Baozisoftware/qrcode-terminal-go"
@@ -33,6 +34,13 @@ func main() {
 		Macaroon: sEnc}
 	certB, _ := json.Marshal(cert)
 
-	obj := qrcodeTerminal.New()
-	obj.Get(string(certB)).Print()
+	jsonPtr := flag.Bool("j", false, "Generate json instead of a QRCode.")
+	flag.Parse()
+
+    if *jsonPtr {
+    	fmt.Print(string(certB))
+    } else {
+		obj := qrcodeTerminal.New()
+		obj.Get(string(certB)).Print()
+	}
 }
