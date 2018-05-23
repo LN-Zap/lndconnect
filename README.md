@@ -1,6 +1,6 @@
 # zapconnect 🌩
 
-Generate QRCode to connect iOS app to remote LND
+Generate QRCode to connect iOS app to remote LND.
 
 ## Installing zapconnect
 
@@ -16,3 +16,5 @@ go install -v ./...
 ```
 zapconnect
 ```
+
+With option `-j` you can also display a json string instead of a QRCode.
