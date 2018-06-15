@@ -18,3 +18,5 @@ zapconnect
 ```
 
 With option `-j` you can also display a json string instead of a QRCode.
+
+Option `-i` adds the local ip to the QRCode.
