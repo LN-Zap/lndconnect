@@ -8,6 +8,9 @@ import (
 "github.com/Baozisoftware/qrcode-terminal-go"
 "encoding/json"
 b64 "encoding/base64"
+"net/http"
+"os"
+"strings"
 )
 
 type certificates struct {
@@ -28,6 +31,23 @@ func getLocalIP() string {
 			}
 		}
 	}
+	return ""
+}
+
+func getPublicIP() string {
+	resp, err := http.Get("http://ipv4.myexternalip.com/raw")
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Stderr.WriteString("\n")
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode == http.StatusOK {
+	    bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	    return strings.TrimSpace(string(bodyBytes))
+	}
+
 	return ""
 }
 
@@ -53,6 +73,8 @@ func main() {
 	ipString := ""
 	if *ipPtr {
 		ipString = getLocalIP() + ":10009"
+	} else {
+		ipString = getPublicIP() + ":10009"
 	}
 
 	cert := &certificates{
