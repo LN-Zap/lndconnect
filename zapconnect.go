@@ -1,7 +1,6 @@
 package main
 
 import (
-// "flag"
 "fmt"
 "net"
 "io/ioutil"
@@ -54,18 +53,19 @@ func getPublicIP() string {
 func main() {
 	loadedConfig, err := loadConfig()
 	if err != nil {
+		fmt.Println()
 		return
 	}
 
 	certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
 	if err != nil {
-		fmt.Print(err)
+		fmt.Println(err)
 		return
 	}
 
 	macBytes, err := ioutil.ReadFile(loadedConfig.AdminMacPath)
 	if err != nil {
-		fmt.Print(err)
+		fmt.Println(err)
 		return
 	}
 
