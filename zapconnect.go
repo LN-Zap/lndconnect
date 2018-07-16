@@ -1,15 +1,16 @@
 package main
 
 import (
-"fmt"
-"net"
-"io/ioutil"
-"github.com/Baozisoftware/qrcode-terminal-go"
-"encoding/json"
-b64 "encoding/base64"
-"net/http"
-"os"
-"strings"
+	"fmt"
+	"net"
+	"io/ioutil"
+	"github.com/Baozisoftware/qrcode-terminal-go"
+	"encoding/json"
+	b64 "encoding/base64"
+	"net/http"
+	"os"
+	"strings"
+	"encoding/pem"
 )
 
 type certificates struct {
@@ -63,13 +64,20 @@ func main() {
 		return
 	}
 
+	block, _ := pem.Decode(certBytes)
+	if block == nil || block.Type != "CERTIFICATE" {
+		fmt.Println("failed to decode PEM block containing certificate")
+	}
+
+	certificate := b64.StdEncoding.EncodeToString([]byte(block.Bytes))
+
 	macBytes, err := ioutil.ReadFile(loadedConfig.AdminMacPath)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	sEnc := b64.StdEncoding.EncodeToString([]byte(macBytes))
+	macaroonB64 := b64.StdEncoding.EncodeToString([]byte(macBytes))
 
 	ipString := ""
 	if loadedConfig.LocalIp {
@@ -79,9 +87,9 @@ func main() {
 	}
 
 	cert := &certificates{
-		Cert:	  string(certBytes),
-		Macaroon: sEnc,
-		Ip:		  ipString}
+		Cert:     certificate,
+		Macaroon: macaroonB64,
+		Ip:       ipString}
 	certB, _ := json.Marshal(cert)
 
 
