@@ -17,6 +17,16 @@ go install -v ./...
 zapconnect
 ```
 
-With option `-j` you can also display a json string instead of a QRCode.
+## Application Options
 
-Option `-i` adds the local ip to the QRCode.
+```
+-i, --localip            Use local ip instead of public ip.
+-j, --json               Display json instead of a QRCode.
+    --lnddir=            The base directory that contains lnd's data, logs, configuration
+                         file, etc.
+    --configfile=        Path to configuration file
+-b, --datadir=           The directory to store lnd's data within
+    --tlscertpath=       Path to write the TLS certificate for lnd's RPC and REST services
+    --adminmacaroonpath= Path to write the admin macaroon for lnd's RPC and REST services 
+                         if it doesn't exist
+```
