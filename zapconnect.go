@@ -1,7 +1,7 @@
 package main
 
 import (
-"flag"
+// "flag"
 "fmt"
 "net"
 "io/ioutil"
@@ -52,26 +52,27 @@ func getPublicIP() string {
 }
 
 func main() {
-	ipPtr := flag.Bool("i", false, "Include local ip in QRCode.")
-	jsonPtr := flag.Bool("j", false, "Generate json instead of a QRCode.")
-	flag.Parse()
-
-	loadedConfig, _ := loadConfig()
+	loadedConfig, err := loadConfig()
+	if err != nil {
+		return
+	}
 
 	certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
 	if err != nil {
 		fmt.Print(err)
+		return
 	}
 
 	macBytes, err := ioutil.ReadFile(loadedConfig.AdminMacPath)
 	if err != nil {
 		fmt.Print(err)
+		return
 	}
 
 	sEnc := b64.StdEncoding.EncodeToString([]byte(macBytes))
 
 	ipString := ""
-	if *ipPtr {
+	if loadedConfig.LocalIp {
 		ipString = getLocalIP() + ":10009"
 	} else {
 		ipString = getPublicIP() + ":10009"
@@ -84,7 +85,7 @@ func main() {
 	certB, _ := json.Marshal(cert)
 
 
-	if *jsonPtr {
+	if loadedConfig.Json {
 		fmt.Println(string(certB))
 	} else {
 		obj := qrcodeTerminal.New()

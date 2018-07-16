@@ -12,6 +12,7 @@ import (
 
 const (
 	defaultConfigFilename     = "lnd.conf"
+	defaultDataDirname        = "data"
 	defaultTLSCertFilename    = "tls.cert"
 	defaultAdminMacFilename   = "admin.macaroon"
 )
@@ -19,6 +20,7 @@ const (
 var (
 	defaultLndDir     = btcutil.AppDataDir("lnd", false)
 	defaultConfigFile = filepath.Join(defaultLndDir, defaultConfigFilename)
+	defaultDataDir    = filepath.Join(defaultLndDir, defaultDataDirname)
 	defaultTLSCertPath = filepath.Join(defaultLndDir, defaultTLSCertFilename)
 	defaultAdminMacPath   = filepath.Join(defaultLndDir, defaultAdminMacFilename)
 )
@@ -28,8 +30,11 @@ var (
 // See loadConfig for further details regarding the configuration
 // loading+parsing process.
 type config struct {
+	LocalIp        bool     `short:"i" long:"localip" description:"Include local ip in QRCode."`
+	Json           bool     `short:"j" long:"json" description:"Generate json instead of a QRCode."`
 	LndDir         string   `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
 	ConfigFile     string   `long:"C" long:"configfile" description:"Path to configuration file"`
+	DataDir        string   `short:"b" long:"datadir" description:"The directory to store lnd's data within"`
 	TLSCertPath    string   `long:"tlscertpath" description:"Path to write the TLS certificate for lnd's RPC and REST services"`
 	AdminMacPath   string   `long:"adminmacaroonpath" description:"Path to write the admin macaroon for lnd's RPC and REST services if it doesn't exist"`
 }
@@ -38,16 +43,33 @@ func loadConfig() (*config, error) {
 	defaultCfg := config{
 		LndDir:         defaultLndDir,
 		ConfigFile:     defaultConfigFile,
+		DataDir:        defaultDataDir,
 		TLSCertPath:    defaultTLSCertPath,
 		AdminMacPath:   defaultAdminMacPath,
 	}
 
-	cfg := defaultCfg
+	// Pre-parse the command line options to pick up an alternative config
+	// file.
+	preCfg := defaultCfg
+	if _, err := flags.Parse(&preCfg); err != nil {
+		return nil, err
+	}
+
+	cfg := preCfg
 	configFile := cleanAndExpandPath(defaultCfg.ConfigFile)
 	flags.IniParse(configFile, &cfg)
 
 	cfg.TLSCertPath = cleanAndExpandPath(cfg.TLSCertPath)
 	cfg.AdminMacPath = cleanAndExpandPath(cfg.AdminMacPath)
+
+	// If a custom macaroon directory wasn't specified and the data
+	// directory has changed from the default path, then we'll also update
+	// the path for the macaroons to be generated.
+	if cfg.DataDir != defaultDataDir && cfg.AdminMacPath == defaultAdminMacPath {
+		cfg.AdminMacPath = filepath.Join(
+			cfg.DataDir, defaultAdminMacFilename,
+		)
+	}
 
 	return &cfg, nil
 }
