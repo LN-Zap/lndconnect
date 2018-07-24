@@ -21,6 +21,7 @@ zapconnect
 
 ```
 -i, --localip            Use local ip instead of public ip.
+-l, --localhost          Use 127.0.0.1 for ip.
 -j, --json               Display json instead of a QRCode.
     --lnddir=            The base directory that contains lnd's data, logs, configuration
                          file, etc.

@@ -31,6 +31,7 @@ var (
 // loading+parsing process.
 type config struct {
 	LocalIp        bool     `short:"i" long:"localip" description:"Include local ip in QRCode."`
+	Localhost      bool     `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip."`
 	Json           bool     `short:"j" long:"json" description:"Generate json instead of a QRCode."`
 	LndDir         string   `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
 	ConfigFile     string   `long:"C" long:"configfile" description:"Path to configuration file"`

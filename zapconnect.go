@@ -82,6 +82,8 @@ func main() {
 	ipString := ""
 	if loadedConfig.LocalIp {
 		ipString = getLocalIP() + ":10009"
+	} else if loadedConfig.Localhost {
+		ipString = "127.0.0.1:10009"
 	} else {
 		ipString = getPublicIP() + ":10009"
 	}
