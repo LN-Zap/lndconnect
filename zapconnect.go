@@ -80,13 +80,22 @@ func main() {
 	macaroonB64 := b64.StdEncoding.EncodeToString([]byte(macBytes))
 
 	ipString := ""
-	if loadedConfig.LocalIp {
-		ipString = getLocalIP() + ":10009"
-	} else if loadedConfig.Localhost {
-		ipString = "127.0.0.1:10009"
+	if loadedConfig.ZapConnect.LocalIp {
+		ipString = getLocalIP()
+	} else if loadedConfig.ZapConnect.Localhost {
+		ipString = "127.0.0.1"
 	} else {
-		ipString = getPublicIP() + ":10009"
+		ipString = getPublicIP()
 	}
+
+	addr := loadedConfig.RPCListeners[0]
+	_, port, err := net.SplitHostPort(addr.String())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	ipString = net.JoinHostPort(ipString, port)
 
 	cert := &certificates{
 		Cert:     certificate,
@@ -95,7 +104,7 @@ func main() {
 	certB, _ := json.Marshal(cert)
 
 
-	if loadedConfig.Json {
+	if loadedConfig.ZapConnect.Json {
 		fmt.Println(string(certB))
 	} else {
 		obj := qrcodeTerminal.New()
