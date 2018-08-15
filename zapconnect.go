@@ -109,5 +109,6 @@ func main() {
 	} else {
 		obj := qrcodeTerminal.New()
 		obj.Get(string(certB)).Print()
+		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"zapconnect -j\" to get a code you can copy paste into the app.")
 	}
 }
