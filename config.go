@@ -19,6 +19,7 @@ import (
 	"github.com/lightningnetwork/lnd/htlcswitch/hodl"
 	"github.com/lightningnetwork/lnd/lncfg"
 	"github.com/lightningnetwork/lnd/lnwire"
+	"github.com/lightningnetwork/lnd/tor"
 )
 
 const (
@@ -217,6 +218,8 @@ type config struct {
 	NoNetBootstrap bool `long:"nobootstrap" description:"If true, then automatic network bootstrapping will not be attempted."`
 
 	NoEncryptWallet bool `long:"noencryptwallet" description:"If set, wallet will be encrypted using the default passphrase."`
+
+	net tor.Net
 }
 
 // loadConfig initializes and parses the config using a config file and command
@@ -281,6 +284,7 @@ func loadConfig() (*config, error) {
 			MinChannelSize: int64(0),
 			MaxChannelSize: int64(0),
 		},
+		net: &tor.ClearNet{},
 	}
 
 	// Pre-parse the command line options to pick up an alternative config
@@ -348,7 +352,7 @@ func loadConfig() (*config, error) {
 	// duplicate addresses.
 	cfg.RPCListeners, err = lncfg.NormalizeAddresses(
 		cfg.RawRPCListeners, strconv.Itoa(defaultRPCPort),
-		nil,
+		cfg.net.ResolveTCPAddr,
 	)
 	if err != nil {
 		return nil, err
