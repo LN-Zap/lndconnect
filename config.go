@@ -215,6 +215,15 @@ type config struct {
 
 	NoEncryptWallet bool `long:"noencryptwallet" description:"If set, wallet will be encrypted using the default passphrase."`
 
+	TrickleDelay        int           `long:"trickledelay" description:"Time in milliseconds between each release of announcements to the network"`
+	InactiveChanTimeout time.Duration `long:"inactivechantimeout" description:"If a channel has been inactive for the set time, send a ChannelUpdate disabling it."`
+
+	Alias       string `long:"alias" description:"The node alias. Used as a moniker by peers and intelligence services"`
+	Color       string `long:"color" description:"The color of the node in hex format (i.e. '#3399FF'). Used to customize node appearance in intelligence services"`
+	MinChanSize int64  `long:"minchansize" description:"The smallest channel size (in satoshis) that we should accept. Incoming channels smaller than this will be rejected"`
+
+	NoChanUpdates bool `long:"nochanupdates" description:"If specified, lnd will not request real-time channel updates from connected peers. This option should be used by routing nodes to save bandwidth."`
+
 	net tor.Net
 }
 
@@ -318,7 +327,7 @@ func loadConfig() (*config, error) {
 
 	var primaryChain string
 	networkName := "testnet"
-	
+
 	switch {
 	case cfg.Litecoin.Active:
 		primaryChain = "litecoin"
