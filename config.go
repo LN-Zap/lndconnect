@@ -61,10 +61,6 @@ var (
 	defaultTLSCertPath = filepath.Join(defaultLndDir, defaultTLSCertFilename)
 	defaultTLSKeyPath  = filepath.Join(defaultLndDir, defaultTLSKeyFilename)
 
-	defaultAdminMacPath   = filepath.Join(defaultLndDir, defaultAdminMacFilename)
-	defaultReadMacPath    = filepath.Join(defaultLndDir, defaultReadMacFilename)
-	defaultInvoiceMacPath = filepath.Join(defaultLndDir, defaultInvoiceMacFilename)
-
 	defaultBtcdDir         = btcutil.AppDataDir("btcd", false)
 	defaultBtcdRPCCertFile = filepath.Join(defaultBtcdDir, "rpc.cert")
 
@@ -238,9 +234,6 @@ func loadConfig() (*config, error) {
 		DebugLevel:     defaultLogLevel,
 		TLSCertPath:    defaultTLSCertPath,
 		TLSKeyPath:     defaultTLSKeyPath,
-		AdminMacPath:   defaultAdminMacPath,
-		InvoiceMacPath: defaultInvoiceMacPath,
-		ReadMacPath:    defaultReadMacPath,
 		LogDir:         defaultLogDir,
 		MaxLogFiles:    defaultMaxLogFiles,
 		MaxLogFileSize: defaultMaxLogFileSize,
@@ -308,7 +301,6 @@ func loadConfig() (*config, error) {
 		}
 		preCfg.DataDir = filepath.Join(lndDir, defaultDataDirname)
 		preCfg.TLSCertPath = filepath.Join(lndDir, defaultTLSCertFilename)
-		preCfg.AdminMacPath = filepath.Join(lndDir, defaultAdminMacFilename)
 	}
 
 	// Next, load any additional configuration options from the file.
@@ -324,6 +316,29 @@ func loadConfig() (*config, error) {
 		return nil, err
 	}
 
+	var primaryChain string
+	var networkName string
+	switch {
+	case cfg.Litecoin.Active:
+		primaryChain = "litecoin"
+		networkName = "mainnet"
+	case cfg.Bitcoin.Active:
+		if cfg.Bitcoin.MainNet {
+			networkName = "mainnet"
+		}
+		if cfg.Bitcoin.TestNet3 {
+			networkName = "testnet"
+		}
+		if cfg.Bitcoin.RegTest {
+			networkName = "regtest"
+		}
+		if cfg.Bitcoin.SimNet {
+			networkName = "simnet"
+		}
+
+		primaryChain = "bitcoin"
+	}
+
 	// As soon as we're done parsing configuration options, ensure all paths
 	// to directories and files are cleaned and expanded before attempting
 	// to use them later on.
@@ -331,12 +346,18 @@ func loadConfig() (*config, error) {
 	cfg.TLSCertPath = cleanAndExpandPath(cfg.TLSCertPath)
 	cfg.AdminMacPath = cleanAndExpandPath(cfg.AdminMacPath)
 
+	networkDir := filepath.Join(
+		cfg.DataDir, defaultChainSubDirname,
+		primaryChain,
+		networkName,
+	)
+
 	// If a custom macaroon directory wasn't specified and the data
 	// directory has changed from the default path, then we'll also update
 	// the path for the macaroons to be generated.
-	if cfg.DataDir != defaultDataDir && cfg.AdminMacPath == defaultAdminMacPath {
+	if cfg.AdminMacPath == "" {
 		cfg.AdminMacPath = filepath.Join(
-			cfg.DataDir, defaultAdminMacFilename,
+			networkDir, defaultAdminMacFilename,
 		)
 	}
 
@@ -372,6 +393,10 @@ func loadConfig() (*config, error) {
 // passed path, cleans the result, and returns it.
 // This function is taken from https://github.com/btcsuite/btcd
 func cleanAndExpandPath(path string) string {
+	if path == "" {
+		return ""
+	}
+
 	// Expand initial ~ to OS specific home directory.
 	if strings.HasPrefix(path, "~") {
 		var homeDir string
