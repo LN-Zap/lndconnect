@@ -326,7 +326,7 @@ func loadConfig() (*config, error) {
 	}
 
 	primaryChain := "bitcoin"
-	networkName := "testnet"
+	networkName := "mainnet"
 
 	switch {
 	case cfg.Litecoin.Active:
