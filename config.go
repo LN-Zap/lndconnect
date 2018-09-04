@@ -325,7 +325,7 @@ func loadConfig() (*config, error) {
 		return nil, err
 	}
 
-	var primaryChain string
+	primaryChain := "bitcoin"
 	networkName := "testnet"
 
 	switch {
