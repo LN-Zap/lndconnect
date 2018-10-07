@@ -10,6 +10,7 @@ import (
 	"os"
 	"encoding/pem"
     "github.com/glendc/go-external-ip"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 type certificates struct {
@@ -38,7 +39,7 @@ func getPublicIP() string {
     ip, err := consensus.ExternalIP()
     if err != nil {
     	fmt.Println(err)
-		os.Exit(1)    
+		os.Exit(1)
     }
 
 	return ip.String()
@@ -99,6 +100,9 @@ func main() {
 
 	if loadedConfig.ZapConnect.Json {
 		fmt.Println(string(certB))
+	} else if loadedConfig.ZapConnect.Image {
+		qrcode.WriteFile(string(certB), qrcode.Medium, 512, "zapconnect-qr.png")
+		fmt.Println("Wrote QR Code to file \"zapconnect-qr.png\"")
 	} else {
 		obj := qrcodeTerminal.New()
 		obj.Get(string(certB)).Print()

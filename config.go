@@ -144,6 +144,7 @@ type zapConnectConfig struct {
 	LocalIp   bool `short:"i" long:"localip" description:"Include local ip in QRCode."`
 	Localhost bool `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip."`
 	Json      bool `short:"j" long:"json" description:"Generate json instead of a QRCode."`
+	Image     bool `short:"o" long:"image" description:"Output QRCode to file."`
 }
 
 // config defines the configuration options for lnd.
