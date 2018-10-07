@@ -102,7 +102,7 @@ func main() {
 		fmt.Println(string(certB))
 	} else if loadedConfig.ZapConnect.Image {
 		qrcode.WriteFile(string(certB), qrcode.Medium, 512, "zapconnect-qr.png")
-		fmt.Println("Outputed QRCode to file \"zapconnect-qr.png\"")
+		fmt.Println("Wrote QR Code to file \"zapconnect-qr.png\"")
 	} else {
 		obj := qrcodeTerminal.New()
 		obj.Get(string(certB)).Print()
