@@ -7,10 +7,9 @@ import (
 	"github.com/Baozisoftware/qrcode-terminal-go"
 	"encoding/json"
 	b64 "encoding/base64"
-	"net/http"
 	"os"
-	"strings"
 	"encoding/pem"
+    "github.com/glendc/go-external-ip"
 )
 
 type certificates struct {
@@ -35,20 +34,14 @@ func getLocalIP() string {
 }
 
 func getPublicIP() string {
-	resp, err := http.Get("http://ipv4.myexternalip.com/raw")
-	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString("\n")
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-	
-	if resp.StatusCode == http.StatusOK {
-	    bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	    return strings.TrimSpace(string(bodyBytes))
-	}
+	consensus := externalip.DefaultConsensus(nil, nil)
+    ip, err := consensus.ExternalIP()
+    if err != nil {
+    	fmt.Println(err)
+		os.Exit(1)    
+    }
 
-	return ""
+	return ip.String()
 }
 
 func main() {
