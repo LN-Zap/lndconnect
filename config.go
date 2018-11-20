@@ -23,33 +23,44 @@ import (
 )
 
 const (
-	defaultConfigFilename     = "lnd.conf"
-	defaultDataDirname        = "data"
-	defaultChainSubDirname    = "chain"
-	defaultGraphSubDirname    = "graph"
-	defaultTLSCertFilename    = "tls.cert"
-	defaultTLSKeyFilename     = "tls.key"
-	defaultAdminMacFilename   = "admin.macaroon"
-	defaultReadMacFilename    = "readonly.macaroon"
-	defaultInvoiceMacFilename = "invoice.macaroon"
-	defaultLogLevel           = "info"
-	defaultLogDirname         = "logs"
-	defaultLogFilename        = "lnd.log"
-	defaultRPCPort            = 10009
-	defaultRESTPort           = 8080
-	defaultPeerPort           = 9735
-	defaultRPCHost            = "localhost"
-	defaultMaxPendingChannels = 1
-	defaultNoEncryptWallet    = false
-	defaultTrickleDelay       = 30 * 1000
-	defaultMaxLogFiles        = 3
-	defaultMaxLogFileSize     = 10
+	defaultConfigFilename      = "lnd.conf"
+	defaultDataDirname         = "data"
+	defaultChainSubDirname     = "chain"
+	defaultGraphSubDirname     = "graph"
+	defaultTLSCertFilename     = "tls.cert"
+	defaultTLSKeyFilename      = "tls.key"
+	defaultAdminMacFilename    = "admin.macaroon"
+	defaultReadMacFilename     = "readonly.macaroon"
+	defaultInvoiceMacFilename  = "invoice.macaroon"
+	defaultLogLevel            = "info"
+	defaultLogDirname          = "logs"
+	defaultLogFilename         = "lnd.log"
+	defaultRPCPort             = 10009
+	defaultRESTPort            = 8080
+	defaultPeerPort            = 9735
+	defaultRPCHost             = "localhost"
+	defaultMaxPendingChannels  = 1
+	defaultNoSeedBackup        = false
+	defaultTrickleDelay        = 30 * 1000
+	defaultInactiveChanTimeout = 20 * time.Minute
+	defaultMaxLogFiles         = 3
+	defaultMaxLogFileSize      = 10
 
 	defaultTorSOCKSPort            = 9050
 	defaultTorDNSHost              = "soa.nodes.lightning.directory"
 	defaultTorDNSPort              = 53
 	defaultTorControlPort          = 9051
 	defaultTorV2PrivateKeyFilename = "v2_onion_private_key"
+	defaultTorV3PrivateKeyFilename = "v3_onion_private_key"
+
+	defaultBroadcastDelta = 10
+
+	// minTimeLockDelta is the minimum timelock we require for incoming
+	// HTLCs on our channels.
+	minTimeLockDelta = 4
+
+	defaultAlias = ""
+	defaultColor = "#3399FF"
 )
 
 var (
@@ -70,10 +81,9 @@ var (
 	defaultBitcoindDir  = btcutil.AppDataDir("bitcoin", false)
 	defaultLitecoindDir = btcutil.AppDataDir("litecoin", false)
 
-	defaultTorSOCKS            = net.JoinHostPort("localhost", strconv.Itoa(defaultTorSOCKSPort))
-	defaultTorDNS              = net.JoinHostPort(defaultTorDNSHost, strconv.Itoa(defaultTorDNSPort))
-	defaultTorControl          = net.JoinHostPort("localhost", strconv.Itoa(defaultTorControlPort))
-	defaultTorV2PrivateKeyPath = filepath.Join(defaultLndDir, defaultTorV2PrivateKeyFilename)
+	defaultTorSOCKS   = net.JoinHostPort("localhost", strconv.Itoa(defaultTorSOCKSPort))
+	defaultTorDNS     = net.JoinHostPort(defaultTorDNSHost, strconv.Itoa(defaultTorDNSPort))
+	defaultTorControl = net.JoinHostPort("localhost", strconv.Itoa(defaultTorControlPort))
 )
 
 type chainConfig struct {
@@ -127,17 +137,19 @@ type autoPilotConfig struct {
 	Allocation     float64 `long:"allocation" description:"The percentage of total funds that should be committed to automatic channel establishment"`
 	MinChannelSize int64   `long:"minchansize" description:"The smallest channel that the autopilot agent should create"`
 	MaxChannelSize int64   `long:"maxchansize" description:"The largest channel that the autopilot agent should create"`
+	Private        bool    `long:"private" description:"Whether the channels created by the autopilot agent should be private or not. Private channels won't be announced to the network."`
+	MinConfs       int32   `long:"minconfs" description:"The minimum number of confirmations each of your inputs in funding transactions created by the autopilot agent must have."`
 }
 
 type torConfig struct {
-	Active           bool   `long:"active" description:"Allow outbound and inbound connections to be routed through Tor"`
-	SOCKS            string `long:"socks" description:"The host:port that Tor's exposed SOCKS5 proxy is listening on"`
-	DNS              string `long:"dns" description:"The DNS server as host:port that Tor will use for SRV queries - NOTE must have TCP resolution enabled"`
-	StreamIsolation  bool   `long:"streamisolation" description:"Enable Tor stream isolation by randomizing user credentials for each connection."`
-	Control          string `long:"control" description:"The host:port that Tor is listening on for Tor control connections"`
-	V2               bool   `long:"v2" description:"Automatically set up a v2 onion service to listen for inbound connections"`
-	V2PrivateKeyPath string `long:"v2privatekeypath" description:"The path to the private key of the onion service being created"`
-	V3               bool   `long:"v3" description:"Use a v3 onion service to listen for inbound connections"`
+	Active          bool   `long:"active" description:"Allow outbound and inbound connections to be routed through Tor"`
+	SOCKS           string `long:"socks" description:"The host:port that Tor's exposed SOCKS5 proxy is listening on"`
+	DNS             string `long:"dns" description:"The DNS server as host:port that Tor will use for SRV queries - NOTE must have TCP resolution enabled"`
+	StreamIsolation bool   `long:"streamisolation" description:"Enable Tor stream isolation by randomizing user credentials for each connection."`
+	Control         string `long:"control" description:"The host:port that Tor is listening on for Tor control connections"`
+	V2              bool   `long:"v2" description:"Automatically set up a v2 onion service to listen for inbound connections"`
+	V3              bool   `long:"v3" description:"Automatically set up a v3 onion service to listen for inbound connections"`
+	PrivateKeyPath  string `long:"privatekeypath" description:"The path to the private key of the onion service being created"`
 }
 
 type zapConnectConfig struct {
@@ -214,7 +226,7 @@ type config struct {
 
 	NoNetBootstrap bool `long:"nobootstrap" description:"If true, then automatic network bootstrapping will not be attempted."`
 
-	NoEncryptWallet bool `long:"noencryptwallet" description:"If set, wallet will be encrypted using the default passphrase."`
+	NoSeedBackup bool `long:"noseedbackup" description:"If true, NO SEED WILL BE EXPOSED AND THE WALLET WILL BE ENCRYPTED USING THE DEFAULT PASSPHRASE -- EVER. THIS FLAG IS ONLY FOR TESTING AND IS BEING DEPRECATED."`
 
 	TrickleDelay        int           `long:"trickledelay" description:"Time in milliseconds between each release of announcements to the network"`
 	InactiveChanTimeout time.Duration `long:"inactivechantimeout" description:"If a channel has been inactive for the set time, send a ChannelUpdate disabling it."`
@@ -225,7 +237,11 @@ type config struct {
 
 	NoChanUpdates bool `long:"nochanupdates" description:"If specified, lnd will not request real-time channel updates from connected peers. This option should be used by routing nodes to save bandwidth."`
 
+	RejectPush bool `long:"rejectpush" description:"If true, lnd will not accept channel opening requests with non-zero push amounts. This should prevent accidental pushes to merchant nodes."`
+
 	net tor.Net
+
+	// Routing *routing.Conf `group:"routing" namespace:"routing"`
 }
 
 // loadConfig initializes and parses the config using a config file and command
@@ -280,12 +296,22 @@ func loadConfig() (*config, error) {
 			RPCHost: defaultRPCHost,
 		},
 		MaxPendingChannels: defaultMaxPendingChannels,
-		NoEncryptWallet:    defaultNoEncryptWallet,
+		NoSeedBackup:       defaultNoSeedBackup,
 		Autopilot: &autoPilotConfig{
 			MaxChannels:    5,
 			Allocation:     0.6,
-			MinChannelSize: int64(0),
-			MaxChannelSize: int64(0),
+			MinChannelSize: 0,
+			MaxChannelSize: 0,
+		},
+		TrickleDelay:        defaultTrickleDelay,
+		InactiveChanTimeout: defaultInactiveChanTimeout,
+		Alias:               defaultAlias,
+		Color:               defaultColor,
+		MinChanSize:         0,
+		Tor: &torConfig{
+			SOCKS:   defaultTorSOCKS,
+			DNS:     defaultTorDNS,
+			Control: defaultTorControl,
 		},
 		net: &tor.ClearNet{},
 	}
