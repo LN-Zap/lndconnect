@@ -157,6 +157,8 @@ type zapConnectConfig struct {
 	Localhost bool `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip."`
 	Json      bool `short:"j" long:"json" description:"Generate json instead of a QRCode."`
 	Image     bool `short:"o" long:"image" description:"Output QRCode to file."`
+	Invoice   bool `long:"invoice" description:"use invoice macaroon"`
+	Readonly  bool `long:"readonly" description:"use readonly macaroon"`
 }
 
 // config defines the configuration options for lnd.
@@ -382,6 +384,8 @@ func loadConfig() (*config, error) {
 	cfg.DataDir = cleanAndExpandPath(cfg.DataDir)
 	cfg.TLSCertPath = cleanAndExpandPath(cfg.TLSCertPath)
 	cfg.AdminMacPath = cleanAndExpandPath(cfg.AdminMacPath)
+	cfg.ReadMacPath = cleanAndExpandPath(cfg.ReadMacPath)
+	cfg.InvoiceMacPath = cleanAndExpandPath(cfg.InvoiceMacPath)
 
 	networkDir := filepath.Join(
 		cfg.DataDir, defaultChainSubDirname,
@@ -395,6 +399,16 @@ func loadConfig() (*config, error) {
 	if cfg.AdminMacPath == "" {
 		cfg.AdminMacPath = filepath.Join(
 			networkDir, defaultAdminMacFilename,
+		)
+	}
+	if cfg.ReadMacPath == "" {
+		cfg.ReadMacPath = filepath.Join(
+			networkDir, defaultReadMacFilename,
+		)
+	}
+	if cfg.InvoiceMacPath == "" {
+		cfg.InvoiceMacPath = filepath.Join(
+			networkDir, defaultInvoiceMacFilename,
 		)
 	}
 

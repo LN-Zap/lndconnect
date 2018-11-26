@@ -65,7 +65,15 @@ func main() {
 
 	certificate := b64.StdEncoding.EncodeToString([]byte(block.Bytes))
 
-	macBytes, err := ioutil.ReadFile(loadedConfig.AdminMacPath)
+	var macBytes []byte
+	if loadedConfig.ZapConnect.Invoice {
+		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)		
+	} else if loadedConfig.ZapConnect.Readonly {
+		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)		
+	} else {
+		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)		
+	}
+
 	if err != nil {
 		fmt.Println(err)
 		return
