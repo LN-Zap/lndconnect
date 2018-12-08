@@ -1,22 +1,23 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"io/ioutil"
-	"github.com/Baozisoftware/qrcode-terminal-go"
-	"encoding/json"
 	b64 "encoding/base64"
-	"os"
+	"encoding/json"
 	"encoding/pem"
-    "github.com/glendc/go-external-ip"
-	qrcode "github.com/skip2/go-qrcode"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"os"
+
+	"github.com/Baozisoftware/qrcode-terminal-go"
+	"github.com/glendc/go-external-ip"
+	"github.com/skip2/go-qrcode"
 )
 
 type certificates struct {
-	Cert		string `json:"c"`
-	Macaroon	string `json:"m"`
-	Ip 			string `json:"ip,omitempty"`
+	Cert     string `json:"c"`
+	Macaroon string `json:"m"`
+	Ip       string `json:"ip,omitempty"`
 }
 
 func getLocalIP() string {
@@ -36,11 +37,11 @@ func getLocalIP() string {
 
 func getPublicIP() string {
 	consensus := externalip.DefaultConsensus(nil, nil)
-    ip, err := consensus.ExternalIP()
-    if err != nil {
-    	fmt.Println(err)
+	ip, err := consensus.ExternalIP()
+	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
-    }
+	}
 
 	return ip.String()
 }
@@ -67,11 +68,11 @@ func main() {
 
 	var macBytes []byte
 	if loadedConfig.ZapConnect.Invoice {
-		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)		
+		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
 	} else if loadedConfig.ZapConnect.Readonly {
-		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)		
+		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
 	} else {
-		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)		
+		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
 	}
 
 	if err != nil {
@@ -82,7 +83,9 @@ func main() {
 	macaroonB64 := b64.StdEncoding.EncodeToString([]byte(macBytes))
 
 	ipString := ""
-	if loadedConfig.ZapConnect.LocalIp {
+	if loadedConfig.ZapConnect.Host != "" {
+		ipString = loadedConfig.ZapConnect.Host
+	} else if loadedConfig.ZapConnect.LocalIp {
 		ipString = getLocalIP()
 	} else if loadedConfig.ZapConnect.Localhost {
 		ipString = "127.0.0.1"
@@ -90,21 +93,16 @@ func main() {
 		ipString = getPublicIP()
 	}
 
-	addr := loadedConfig.RPCListeners[0]
-	_, port, err := net.SplitHostPort(addr.String())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	ipString = net.JoinHostPort(ipString, port)
+	ipString = net.JoinHostPort(
+		ipString, fmt.Sprint(loadedConfig.ZapConnect.Port),
+	)
 
 	cert := &certificates{
 		Cert:     certificate,
 		Macaroon: macaroonB64,
-		Ip:       ipString}
+		Ip:       ipString,
+	}
 	certB, _ := json.Marshal(cert)
-
 
 	if loadedConfig.ZapConnect.Json {
 		fmt.Println(string(certB))

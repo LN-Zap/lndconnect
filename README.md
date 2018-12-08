@@ -19,15 +19,20 @@ zapconnect
 ## Application Options
 
 ```
--i, --localip            Use local ip instead of public ip.
--l, --localhost          Use 127.0.0.1 for ip.
--j, --json               Display json instead of a QRCode.
--o, --image              Output QRCode to file.
-    --lnddir=            The base directory that contains lnd's data, logs, configuration
-                         file, etc.
-    --configfile=        Path to configuration file
--b, --datadir=           The directory to store lnd's data within
-    --tlscertpath=       Path to write the TLS certificate for lnd's RPC and REST services
-    --adminmacaroonpath= Path to write the admin macaroon for lnd's RPC and REST services
-                         if it doesn't exist
+-i, --localip               Include local ip in QRCode
+-l, --localhost             Use 127.0.0.1 for ip
+-h, --host=                 Use specific host name
+-p, --port=                 Use this port (default: 10009)
+-o, --image                 Output QRCode to file
+    --invoice               Use invoice macaroon
+    --readonly              Use readonly macaroon
+    --lnddir=               The base directory that contains lnd's data, logs, configuration
+                            file, etc.
+    --configfile=           Path to configuration file
+-b, --datadir=              The directory to find lnd's data within
+    --tlscertpath=          Path to read the TLS certificate from
+    --adminmacaroonpath=    Path to read the admin macaroon from
+    --readonlymacaroonpath= Path to read the read-only macaroon from
+    --invoicemacaroonpath=  Path to read the invoice-only macaroon from
+
 ```
