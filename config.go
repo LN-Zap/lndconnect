@@ -45,7 +45,7 @@ type chainConfig struct {
 type zapConnectConfig struct {
 	LocalIp   bool   `short:"i" long:"localip" description:"Include local ip in QRCode"`
 	Localhost bool   `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
-	Host      string `short:"h" long:"host" description:"Use specific host name"`
+	Host      string `long:"host" description:"Use specific host name"`
 	Port      uint16 `short:"p" long:"port" description:"Use this port"`
 	Json      bool   `short:"j" long:"json" description:"Generate json instead of a QRCode"`
 	Image     bool   `short:"o" long:"image" description:"Output QRCode to file"`

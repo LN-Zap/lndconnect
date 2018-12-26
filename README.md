@@ -21,7 +21,7 @@ zapconnect
 ```
 -i, --localip               Include local ip in QRCode
 -l, --localhost             Use 127.0.0.1 for ip
--h, --host=                 Use specific host name
+    --host=                 Use specific host name
 -p, --port=                 Use this port (default: 10009)
 -o, --image                 Output QRCode to file
     --invoice               Use invoice macaroon
