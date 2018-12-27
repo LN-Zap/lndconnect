@@ -1,6 +1,8 @@
 # lndconnect 🌩
 
-Generate QRCode to connect iOS app to remote LND.
+Generate a QRCode or URI to connect applications to lnd instances.
+
+For more information take a look at the [specification of the uri format](lnd_connect_uri.md).
 
 ## Installing lndconnect
 
