@@ -96,7 +96,7 @@ func main() {
 		ipString, fmt.Sprint(loadedConfig.LndConnect.Port),
 	)
 
-	urlString := fmt.Sprintf("lndconnect:?cert=%s&macaroon=%s&host=%s", certificate, macaroonB64, ipString)
+	urlString := fmt.Sprintf("lndconnect://%s?cert=%s&macaroon=%s", ipString, certificate, macaroonB64)
 
 	if loadedConfig.LndConnect.Json {
 		fmt.Println(urlString)
