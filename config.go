@@ -154,17 +154,29 @@ func loadConfig() (*config, error) {
 		primaryChain = "litecoin"
 		networkName = "mainnet"
 	case cfg.Bitcoin.Active:
+		numNets := 0
 		if cfg.Bitcoin.MainNet {
+			numNets++
 			networkName = "mainnet"
 		}
 		if cfg.Bitcoin.TestNet3 {
+			numNets++
 			networkName = "testnet"
 		}
 		if cfg.Bitcoin.RegTest {
+			numNets++
 			networkName = "regtest"
 		}
 		if cfg.Bitcoin.SimNet {
+			numNets++
 			networkName = "simnet"
+		}
+		if numNets > 1 {
+			str := "The mainnet, testnet, regtest, and " +
+				"simnet params can't be used together -- " +
+				"choose one of the four"
+			err := fmt.Errorf(str)
+			return nil, err
 		}
 
 		primaryChain = "bitcoin"

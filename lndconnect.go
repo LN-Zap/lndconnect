@@ -48,7 +48,7 @@ func getPublicIP() string {
 func main() {
 	loadedConfig, err := loadConfig()
 	if err != nil {
-		fmt.Println()
+		fmt.Println(err)
 		return
 	}
 
