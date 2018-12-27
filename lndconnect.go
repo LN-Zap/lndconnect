@@ -2,7 +2,6 @@ package main
 
 import (
 	b64 "encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -64,12 +63,12 @@ func main() {
 		fmt.Println("failed to decode PEM block containing certificate")
 	}
 
-	certificate := b64.StdEncoding.EncodeToString([]byte(block.Bytes))
+	certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
 
 	var macBytes []byte
-	if loadedConfig.ZapConnect.Invoice {
+	if loadedConfig.LndConnect.Invoice {
 		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
-	} else if loadedConfig.ZapConnect.Readonly {
+	} else if loadedConfig.LndConnect.Readonly {
 		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
 	} else {
 		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
@@ -80,38 +79,33 @@ func main() {
 		return
 	}
 
-	macaroonB64 := b64.StdEncoding.EncodeToString([]byte(macBytes))
+	macaroonB64 := b64.RawURLEncoding.EncodeToString([]byte(macBytes))
 
 	ipString := ""
-	if loadedConfig.ZapConnect.Host != "" {
-		ipString = loadedConfig.ZapConnect.Host
-	} else if loadedConfig.ZapConnect.LocalIp {
+	if loadedConfig.LndConnect.Host != "" {
+		ipString = loadedConfig.LndConnect.Host
+	} else if loadedConfig.LndConnect.LocalIp {
 		ipString = getLocalIP()
-	} else if loadedConfig.ZapConnect.Localhost {
+	} else if loadedConfig.LndConnect.Localhost {
 		ipString = "127.0.0.1"
 	} else {
 		ipString = getPublicIP()
 	}
 
 	ipString = net.JoinHostPort(
-		ipString, fmt.Sprint(loadedConfig.ZapConnect.Port),
+		ipString, fmt.Sprint(loadedConfig.LndConnect.Port),
 	)
 
-	cert := &certificates{
-		Cert:     certificate,
-		Macaroon: macaroonB64,
-		Ip:       ipString,
-	}
-	certB, _ := json.Marshal(cert)
+	urlString := fmt.Sprintf("lndconnect:?cert=%s&macaroon=%s&host=%s", certificate, macaroonB64, ipString)
 
-	if loadedConfig.ZapConnect.Json {
-		fmt.Println(string(certB))
-	} else if loadedConfig.ZapConnect.Image {
-		qrcode.WriteFile(string(certB), qrcode.Medium, 512, "zapconnect-qr.png")
-		fmt.Println("Wrote QR Code to file \"zapconnect-qr.png\"")
+	if loadedConfig.LndConnect.Json {
+		fmt.Println(urlString)
+	} else if loadedConfig.LndConnect.Image {
+		qrcode.WriteFile(urlString, qrcode.Medium, 512, "lndconnect-qr.png")
+		fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
 	} else {
 		obj := qrcodeTerminal.New()
-		obj.Get(string(certB)).Print()
-		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"zapconnect -j\" to get a code you can copy paste into the app.")
+		obj.Get(urlString).Print()
+		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
 	}
 }

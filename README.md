@@ -1,19 +1,19 @@
-# zapconnect 🌩
+# lndconnect 🌩
 
 Generate QRCode to connect iOS app to remote LND.
 
-## Installing zapconnect
+## Installing lndconnect
 
 ```
-go get -d github.com/LN-Zap/zapconnect
-cd $GOPATH/src/github.com/LN-Zap/zapconnect
+go get -d github.com/LN-Zap/lndconnect
+cd $GOPATH/src/github.com/LN-Zap/lndconnect
 make
 ```
 
-## Starting zapconnect
+## Starting lndconnect
 
 ```
-zapconnect
+lndconnect
 ```
 
 ## Application Options

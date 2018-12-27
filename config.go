@@ -42,7 +42,7 @@ type chainConfig struct {
 	RegTest  bool `long:"regtest" description:"Use the regression test network"`
 }
 
-type zapConnectConfig struct {
+type lndConnectConfig struct {
 	LocalIp   bool   `short:"i" long:"localip" description:"Include local ip in QRCode"`
 	Localhost bool   `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
 	Host      string `long:"host" description:"Use specific host name"`
@@ -53,12 +53,12 @@ type zapConnectConfig struct {
 	Readonly  bool   `long:"readonly" description:"use readonly macaroon"`
 }
 
-// config defines the configuration options for zapconnect.
+// config defines the configuration options for lndconnect.
 //
 // See loadConfig for further details regarding the configuration
 // loading+parsing process.
 type config struct {
-	ZapConnect *zapConnectConfig `group:"ZapConnect"`
+	LndConnect *lndConnectConfig `group:"LndConnect"`
 
 	LndDir         string `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
 	ConfigFile     string `long:"C" long:"configfile" description:"Path to configuration file"`
@@ -95,7 +95,7 @@ type config struct {
 // 	4) Parse CLI options and overwrite/add any specified options
 func loadConfig() (*config, error) {
 	defaultCfg := config{
-		ZapConnect: &zapConnectConfig{
+		LndConnect: &lndConnectConfig{
 			Port: defaultRPCPort,
 		},
 		LndDir:      defaultLndDir,
@@ -132,7 +132,7 @@ func loadConfig() (*config, error) {
 	var configFileError error
 	cfg := preCfg
 
-	// We don't have a full representation of all LND options in zapconnect
+	// We don't have a full representation of all LND options in lndconnect
 	// so while parsing the config file, we only take what we need, ignoring
 	// all the unknown (to us) options.
 	p := flags.NewParser(&cfg, flags.IgnoreUnknown)
