@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/Baozisoftware/qrcode-terminal-go"
 	"github.com/glendc/go-external-ip"
@@ -86,20 +88,34 @@ func main() {
 		ipString = getPublicIP()
 	}
 
-	ipString = net.JoinHostPort(
-		ipString, fmt.Sprint(loadedConfig.LndConnect.Port),
-	)
+	ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
 
-	urlString := fmt.Sprintf("lndconnect://%s?cert=%s&macaroon=%s", ipString, certificate, macaroonB64)
+	u := url.URL{Scheme: "lndconnect", Host: ipString}
+	q := u.Query()
+	q.Add("cert", certificate)
+	q.Add("macaroon", macaroonB64)
+
+	for _, s := range loadedConfig.LndConnect.Query {
+		queryParts := strings.Split(s, "=")
+
+		if len(queryParts) != 2 {
+			fmt.Println("Invalid Query Argument:", s)
+			return
+		}
+
+		q.Add(queryParts[0], queryParts[1])
+	}
+
+	u.RawQuery = q.Encode()
 
 	if loadedConfig.LndConnect.Url {
-		fmt.Println(urlString)
+		fmt.Println(u.String())
 	} else if loadedConfig.LndConnect.Image {
-		qrcode.WriteFile(urlString, qrcode.Medium, 512, "lndconnect-qr.png")
+		qrcode.WriteFile(u.String(), qrcode.Medium, 512, "lndconnect-qr.png")
 		fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
 	} else {
 		obj := qrcodeTerminal.New()
-		obj.Get(urlString).Print()
+		obj.Get(u.String()).Print()
 		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
 	}
 }

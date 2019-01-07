@@ -29,6 +29,8 @@ lndconnect
 -o, --image                 Output QRCode to file
     --invoice               Use invoice macaroon
     --readonly              Use readonly macaroon
+-q, --query=                Add additional url query parameters
+
     --lnddir=               The base directory that contains lnd's data, logs, configuration
                             file, etc.
     --configfile=           Path to configuration file

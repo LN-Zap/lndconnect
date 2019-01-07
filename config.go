@@ -42,15 +42,18 @@ type chainConfig struct {
 	RegTest  bool `long:"regtest" description:"Use the regression test network"`
 }
 
+type arrayFlags []string
+
 type lndConnectConfig struct {
-	LocalIp   bool   `short:"i" long:"localip" description:"Include local ip in QRCode"`
-	Localhost bool   `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
-	Host      string `long:"host" description:"Use specific host name"`
-	Port      uint16 `short:"p" long:"port" description:"Use this port"`
-	Url       bool   `short:"j" long:"url" description:"Display url instead of a QRCode"`
-	Image     bool   `short:"o" long:"image" description:"Output QRCode to file"`
-	Invoice   bool   `long:"invoice" description:"use invoice macaroon"`
-	Readonly  bool   `long:"readonly" description:"use readonly macaroon"`
+	LocalIp   bool       `short:"i" long:"localip" description:"Include local ip in QRCode"`
+	Localhost bool       `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
+	Host      string     `long:"host" description:"Use specific host name"`
+	Port      uint16     `short:"p" long:"port" description:"Use this port"`
+	Url       bool       `short:"j" long:"url" description:"Display url instead of a QRCode"`
+	Image     bool       `short:"o" long:"image" description:"Output QRCode to file"`
+	Invoice   bool       `long:"invoice" description:"use invoice macaroon"`
+	Readonly  bool       `long:"readonly" description:"use readonly macaroon"`
+	Query     arrayFlags `short:"q" long:"query" description:"Add additional url query parameters"`
 }
 
 // config defines the configuration options for lndconnect.
