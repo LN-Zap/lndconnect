@@ -25,6 +25,7 @@ lndconnect
 -l, --localhost             Use 127.0.0.1 for ip
     --host=                 Use specific host name
 -p, --port=                 Use this port (default: 10009)
+-j, --url                   Display url instead of a QRCode
 -o, --image                 Output QRCode to file
     --invoice               Use invoice macaroon
     --readonly              Use readonly macaroon
@@ -36,5 +37,4 @@ lndconnect
     --adminmacaroonpath=    Path to read the admin macaroon from
     --readonlymacaroonpath= Path to read the read-only macaroon from
     --invoicemacaroonpath=  Path to read the invoice-only macaroon from
-
 ```

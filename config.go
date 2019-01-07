@@ -47,7 +47,7 @@ type lndConnectConfig struct {
 	Localhost bool   `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
 	Host      string `long:"host" description:"Use specific host name"`
 	Port      uint16 `short:"p" long:"port" description:"Use this port"`
-	Json      bool   `short:"j" long:"json" description:"Generate json instead of a QRCode"`
+	Url       bool   `short:"j" long:"url" description:"Display url instead of a QRCode"`
 	Image     bool   `short:"o" long:"image" description:"Output QRCode to file"`
 	Invoice   bool   `long:"invoice" description:"use invoice macaroon"`
 	Readonly  bool   `long:"readonly" description:"use readonly macaroon"`

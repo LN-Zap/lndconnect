@@ -13,12 +13,6 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
-type certificates struct {
-	Cert     string `json:"c"`
-	Macaroon string `json:"m"`
-	Ip       string `json:"ip,omitempty"`
-}
-
 func getLocalIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -98,7 +92,7 @@ func main() {
 
 	urlString := fmt.Sprintf("lndconnect://%s?cert=%s&macaroon=%s", ipString, certificate, macaroonB64)
 
-	if loadedConfig.LndConnect.Json {
+	if loadedConfig.LndConnect.Url {
 		fmt.Println(urlString)
 	} else if loadedConfig.LndConnect.Image {
 		qrcode.WriteFile(urlString, qrcode.Medium, 512, "lndconnect-qr.png")
