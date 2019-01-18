@@ -1,4 +1,4 @@
-# lndconnect 🌩
+# lndconnect 🌩 [![Build Status](https://travis-ci.com/LN-Zap/lndconnect.svg?branch=master)](https://travis-ci.com/LN-Zap/lndconnect)
 
 Generate a QRCode or URI to connect applications to lnd instances.
 
