@@ -1,5 +1,27 @@
 language: go
-go:
-  - "1.11"
-install: go get -t -v ./...
-script: go test -v ./...
+go: 
+- '1.11'
+before_install:
+- go get github.com/mitchellh/gox
+install:
+- # skip
+script:
+- go get -t -v ./...
+- go test -v ./...
+- gox -os="linux darwin windows" -arch="amd64" -verbose ./...
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: ogNIT/BQNALAEwxFDnnXy55Wextunh47MzDzP7IpgbnL3tENmQLQ/pdoYB4byz6Kq9lSoEZ7eHkUv4kKgbsKwqFYNQXXoXbuC7r4okavZ75d2S//4qB3rAqZHhljUhh/vqC103wjQ2Hl3LIOLQ+btoyMqjEbb0s9GMIYNtyTyjMdzQE43zF4V8rlgpdNDxwxTh8TOHtoJb+vJupZZFw4nJQgAodeDuvr4M1bzxvB1X6gCAHwU7YiEQniKZwD5Ag87o2EhqwicTBiNHSxM9zxmQ4F3Arqx/+VpMdpc0AokHq6jFhjd+wePkRCEvj5c3eTQh6EwCsXK5vaMZMzkb4rd8hQMYf21AHDywYTk9I87X6MUaeB10UrRuIaCiPAsWRLRbKq9j7uje6Ma1chtE7JL5NVvytf0eb9FBciX2TtUc1DdbR/edKpk9xm4bM3zpa+mxX2pMjFZP8E6gPrGqDM83ihtaPemwbVufyiFtBJYGyBt+e/iPaJ/+4grLqt8Bvfk1ZBeAFJeLE1FilZwjIn0qNIHtzinmbH4iwRldUGGDkqpPKqf2PKGp+r4HL7kD+mJ0O4Wl1rJ7fqH1X9nSKxU70pzRpnVey+FK0Z9mw0iZVv5+L+TBKjgbQO4eFkRaVBDU+SRp+1+6rFPMLrZ8eXiDBLNCNgjapkxAXqG8fAmC8=
+  file:
+    # The names of the binaries to output, based on the -output template passed to gox.
+  - lndconnect_windows_amd64.exe
+  - lndconnect_darwin_amd64
+  - lndconnect_linux_amd64
+  on:
+    repo: LN-Zap/lndconnect
+    # Only build binaries for tagged commits
+    tags: true
+    branch: master
