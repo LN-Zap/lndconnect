@@ -48,6 +48,10 @@ func main() {
 		return
 	}
 
+	displayLink(loadedConfig)
+}
+
+func displayLink(loadedConfig *config) {
 	certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
 	if err != nil {
 		fmt.Println(err)
