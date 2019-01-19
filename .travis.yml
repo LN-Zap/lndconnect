@@ -1,10 +1,10 @@
 language: go
-go: 
-- '1.11'
+go:
+- 1.11.x
 before_install:
 - go get github.com/mitchellh/gox
 install:
-- # skip
+- 
 script:
 - go get -t -v ./...
 - go test -v ./...
@@ -14,14 +14,12 @@ deploy:
   provider: releases
   skip_cleanup: true
   api_key:
-    secure: ogNIT/BQNALAEwxFDnnXy55Wextunh47MzDzP7IpgbnL3tENmQLQ/pdoYB4byz6Kq9lSoEZ7eHkUv4kKgbsKwqFYNQXXoXbuC7r4okavZ75d2S//4qB3rAqZHhljUhh/vqC103wjQ2Hl3LIOLQ+btoyMqjEbb0s9GMIYNtyTyjMdzQE43zF4V8rlgpdNDxwxTh8TOHtoJb+vJupZZFw4nJQgAodeDuvr4M1bzxvB1X6gCAHwU7YiEQniKZwD5Ag87o2EhqwicTBiNHSxM9zxmQ4F3Arqx/+VpMdpc0AokHq6jFhjd+wePkRCEvj5c3eTQh6EwCsXK5vaMZMzkb4rd8hQMYf21AHDywYTk9I87X6MUaeB10UrRuIaCiPAsWRLRbKq9j7uje6Ma1chtE7JL5NVvytf0eb9FBciX2TtUc1DdbR/edKpk9xm4bM3zpa+mxX2pMjFZP8E6gPrGqDM83ihtaPemwbVufyiFtBJYGyBt+e/iPaJ/+4grLqt8Bvfk1ZBeAFJeLE1FilZwjIn0qNIHtzinmbH4iwRldUGGDkqpPKqf2PKGp+r4HL7kD+mJ0O4Wl1rJ7fqH1X9nSKxU70pzRpnVey+FK0Z9mw0iZVv5+L+TBKjgbQO4eFkRaVBDU+SRp+1+6rFPMLrZ8eXiDBLNCNgjapkxAXqG8fAmC8=
+    secure: k0IN2xdUkvrwPdxvcoTFTvhXj/PQ5N1YBmgmsWTXUN/INHG8DXqcXdoTcReVCPzNl19LpOps0RlFFMM0HhdZqT3KCNZNKy84PIneuXS9T/sOUhm5TtAcIOm4CloDQjuCbYa84ovPSfT/r/UYnjs+yqIKvfY7zf5T6nwLWtx3N4/IHkttCCPx84sa8I9NpatyKLvppm6eqnNyQFQ+vaUTuy3h7hYoZBVG1ypSW2IOaHSgqsTmLkf4oNqK7yO8IIZAxThzJ1Pwq4Xm3nB9uKthaRZOatOjj83uPpR2isSMG6+Jkki5TLXzgmbDAa0S3gA12C9KH+xxxGUZpwl8/tngTOwVRDxeH0LFANq5IBbBaP4ADzjaf2WCzkb7urpqshFZ/adfJft7SAXZjEWbYtALia0xG0wx+4k7WX2S5xqINcZecsfE4vQN+r75nF5RAqe1twhTfAcQP/uUbiTzdjv/CbRnGEdJ8LbfsVWgNM/e1Z/T96j0Y+sNHc2qWUTkhRiruwXHgUWccH7abBLt8OYmHEp6nu3J+zq88JP9+ZvDTMlcILGX87/A3lsqDnfi5hT/eMcC7Q3ivtKE10h/3v3ZJHpjlSFm0UuZ0ia2sABj1dqVcKDZ9kgMUBZkrdrRv1FqnDs7jq8EH1MRYW5Npt7+yft4GoxjDoKBR4ZBCsL5w34=
   file:
-    # The names of the binaries to output, based on the -output template passed to gox.
   - lndconnect_windows_amd64.exe
   - lndconnect_darwin_amd64
   - lndconnect_linux_amd64
   on:
     repo: LN-Zap/lndconnect
-    # Only build binaries for tagged commits
     tags: true
     branch: master
