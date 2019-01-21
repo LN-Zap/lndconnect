@@ -1,24 +1,18 @@
 language: go
 go:
 - 1.11.x
-before_install:
-- go get github.com/mitchellh/gox
 install:
-- 
-script:
 - go get -t -v ./...
+script:
 - go test -v ./...
-- gox -os="linux darwin windows" -arch="amd64" -verbose ./...
+- ./build.sh
 
 deploy:
   provider: releases
   skip_cleanup: true
   api_key:
     secure: k0IN2xdUkvrwPdxvcoTFTvhXj/PQ5N1YBmgmsWTXUN/INHG8DXqcXdoTcReVCPzNl19LpOps0RlFFMM0HhdZqT3KCNZNKy84PIneuXS9T/sOUhm5TtAcIOm4CloDQjuCbYa84ovPSfT/r/UYnjs+yqIKvfY7zf5T6nwLWtx3N4/IHkttCCPx84sa8I9NpatyKLvppm6eqnNyQFQ+vaUTuy3h7hYoZBVG1ypSW2IOaHSgqsTmLkf4oNqK7yO8IIZAxThzJ1Pwq4Xm3nB9uKthaRZOatOjj83uPpR2isSMG6+Jkki5TLXzgmbDAa0S3gA12C9KH+xxxGUZpwl8/tngTOwVRDxeH0LFANq5IBbBaP4ADzjaf2WCzkb7urpqshFZ/adfJft7SAXZjEWbYtALia0xG0wx+4k7WX2S5xqINcZecsfE4vQN+r75nF5RAqe1twhTfAcQP/uUbiTzdjv/CbRnGEdJ8LbfsVWgNM/e1Z/T96j0Y+sNHc2qWUTkhRiruwXHgUWccH7abBLt8OYmHEp6nu3J+zq88JP9+ZvDTMlcILGX87/A3lsqDnfi5hT/eMcC7Q3ivtKE10h/3v3ZJHpjlSFm0UuZ0ia2sABj1dqVcKDZ9kgMUBZkrdrRv1FqnDs7jq8EH1MRYW5Npt7+yft4GoxjDoKBR4ZBCsL5w34=
-  file:
-  - lndconnect_windows_amd64.exe
-  - lndconnect_darwin_amd64
-  - lndconnect_linux_amd64
+  file: build/*
   on:
     repo: LN-Zap/lndconnect
     tags: true

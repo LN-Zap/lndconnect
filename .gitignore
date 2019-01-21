@@ -11,5 +11,4 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-lndconnect_darwin_amd64
-lndconnect_linux_amd64
+build
