@@ -4,8 +4,10 @@ Zap-iOS can open URLs with the scheme `lndconnect:` to directly connect to remot
 
 ### Syntax
 
+[foo] means optional, <bar> are placeholders
+
 ```
-lndconnect://<host>:<port>?cert=<base64url DER certifcate>&macaroon=<base64url macaroon>
+lndconnect://<host>:<port>?[cert=<base64url DER certifcate>&]macaroon=<base64url macaroon>
 ```
 
 ### Javascript reference implementation
