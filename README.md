@@ -24,6 +24,7 @@ lndconnect
 -i, --localip               Include local ip in QRCode
 -l, --localhost             Use 127.0.0.1 for ip
     --host=                 Use specific host name
+    --nocert                Don't include the certificate
 -p, --port=                 Use this port (default: 10009)
 -j, --url                   Display url instead of a QRCode
 -o, --image                 Output QRCode to file
