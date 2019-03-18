@@ -48,11 +48,12 @@ type lndConnectConfig struct {
 	LocalIp   bool       `short:"i" long:"localip" description:"Include local ip in QRCode"`
 	Localhost bool       `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
 	Host      string     `long:"host" description:"Use specific host name"`
+	NoCert    bool       `long:"nocert" description:"Don't include the certificate"`
 	Port      uint16     `short:"p" long:"port" description:"Use this port"`
 	Url       bool       `short:"j" long:"url" description:"Display url instead of a QRCode"`
 	Image     bool       `short:"o" long:"image" description:"Output QRCode to file"`
-	Invoice   bool       `long:"invoice" description:"use invoice macaroon"`
-	Readonly  bool       `long:"readonly" description:"use readonly macaroon"`
+	Invoice   bool       `long:"invoice" description:"Use invoice macaroon"`
+	Readonly  bool       `long:"readonly" description:"Use readonly macaroon"`
 	Query     arrayFlags `short:"q" long:"query" description:"Add additional url query parameters"`
 }
 

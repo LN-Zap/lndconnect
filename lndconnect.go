@@ -52,19 +52,45 @@ func main() {
 }
 
 func displayLink(loadedConfig *config) {
-	certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
-	if err != nil {
-		fmt.Println(err)
-		return
+	var err error
+
+	// host
+	ipString := ""
+	if loadedConfig.LndConnect.Host != "" {
+		ipString = loadedConfig.LndConnect.Host
+	} else if loadedConfig.LndConnect.LocalIp {
+		ipString = getLocalIP()
+	} else if loadedConfig.LndConnect.Localhost {
+		ipString = "127.0.0.1"
+	} else {
+		ipString = getPublicIP()
 	}
 
-	block, _ := pem.Decode(certBytes)
-	if block == nil || block.Type != "CERTIFICATE" {
-		fmt.Println("failed to decode PEM block containing certificate")
+	ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
+
+	u := url.URL{Scheme: "lndconnect", Host: ipString}
+	q := u.Query()
+
+
+	// cert
+	if !loadedConfig.LndConnect.NoCert {
+		certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		block, _ := pem.Decode(certBytes)
+		if block == nil || block.Type != "CERTIFICATE" {
+			fmt.Println("failed to decode PEM block containing certificate")
+		}
+
+		certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
+
+		q.Add("cert", certificate)
 	}
 
-	certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
-
+	// macaroon
 	var macBytes []byte
 	if loadedConfig.LndConnect.Invoice {
 		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
@@ -81,24 +107,10 @@ func displayLink(loadedConfig *config) {
 
 	macaroonB64 := b64.RawURLEncoding.EncodeToString([]byte(macBytes))
 
-	ipString := ""
-	if loadedConfig.LndConnect.Host != "" {
-		ipString = loadedConfig.LndConnect.Host
-	} else if loadedConfig.LndConnect.LocalIp {
-		ipString = getLocalIP()
-	} else if loadedConfig.LndConnect.Localhost {
-		ipString = "127.0.0.1"
-	} else {
-		ipString = getPublicIP()
-	}
-
-	ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
-
-	u := url.URL{Scheme: "lndconnect", Host: ipString}
-	q := u.Query()
-	q.Add("cert", certificate)
 	q.Add("macaroon", macaroonB64)
 
+
+	// custom query
 	for _, s := range loadedConfig.LndConnect.Query {
 		queryParts := strings.Split(s, "=")
 
@@ -112,6 +124,8 @@ func displayLink(loadedConfig *config) {
 
 	u.RawQuery = q.Encode()
 
+
+	// generate link / QR Code
 	if loadedConfig.LndConnect.Url {
 		fmt.Println(u.String())
 	} else if loadedConfig.LndConnect.Image {
