@@ -71,7 +71,6 @@ func displayLink(loadedConfig *config) {
 	u := url.URL{Scheme: "lndconnect", Host: ipString}
 	q := u.Query()
 
-
 	// cert
 	if !loadedConfig.LndConnect.NoCert {
 		certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
@@ -109,7 +108,6 @@ func displayLink(loadedConfig *config) {
 
 	q.Add("macaroon", macaroonB64)
 
-
 	// custom query
 	for _, s := range loadedConfig.LndConnect.Query {
 		queryParts := strings.Split(s, "=")
@@ -123,7 +121,6 @@ func displayLink(loadedConfig *config) {
 	}
 
 	u.RawQuery = q.Encode()
-
 
 	// generate link / QR Code
 	if loadedConfig.LndConnect.Url {
