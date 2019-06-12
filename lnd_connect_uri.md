@@ -35,7 +35,7 @@ var url = 'lndconnect://' + ip.address() + ':10009?cert=' + cert + '&macaroon=' 
 This is useful when one doesn't want to bring dependencies.
 
 ```
-lndconnect://example.com?cert='"`grep -v 'CERTIFICATE' tls.cert`"'&macaroon='"`base64 admin.macaroon`" | tr -d '\n' | qrencode -o /tmp/out.png && xdg-open /tmp/out.png
+echo 'lndconnect://example.com?cert='"`grep -v 'CERTIFICATE' tls.cert`"'&macaroon='"`base64 admin.macaroon`" | tr -d '\n' | qrencode -o /tmp/out.png && xdg-open /tmp/out.png
 ```
 
 ## Example:
