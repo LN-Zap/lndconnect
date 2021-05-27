@@ -25,6 +25,7 @@ const (
 	defaultReadMacFilename    = "readonly.macaroon"
 	defaultInvoiceMacFilename = "invoice.macaroon"
 	defaultRPCPort            = 10009
+	defaultVersion            = 2
 )
 
 var (
@@ -55,6 +56,7 @@ type lndConnectConfig struct {
 	Invoice   bool       `long:"invoice" description:"Use invoice macaroon"`
 	Readonly  bool       `long:"readonly" description:"Use readonly macaroon"`
 	Query     arrayFlags `short:"q" long:"query" description:"Add additional url query parameters"`
+	Version   uint8      `short:"v" long:"version" description:"The lndconnect version to use"`
 }
 
 // config defines the configuration options for lndconnect.
@@ -100,6 +102,7 @@ type config struct {
 func loadConfig() (*config, error) {
 	defaultCfg := config{
 		LndConnect: &lndConnectConfig{
+			Version: defaultVersion,
 			Port: defaultRPCPort,
 		},
 		LndDir:      defaultLndDir,

@@ -7,6 +7,7 @@ func ExampleLocalhost() {
 		LndConnect: &lndConnectConfig{
 			Localhost: true,
 			Url:       true,
+			Version:      1,
 		},
 	}
 	displayLink(c)
@@ -22,6 +23,7 @@ func ExampleQuery() {
 			Localhost: true,
 			Url:       true,
 			Query:     arrayFlags{"test=abc"},
+			Version:      1,
 		},
 	}
 	displayLink(c)
@@ -37,6 +39,7 @@ func ExamplePort() {
 			Localhost: true,
 			Url:       true,
 			Port:      123,
+			Version:      1,
 		},
 	}
 	displayLink(c)
@@ -52,6 +55,7 @@ func ExampleHost() {
 			Localhost: true,
 			Url:       true,
 			Host:      "1.2.3.4",
+			Version:      1,
 		},
 	}
 	displayLink(c)
@@ -68,9 +72,90 @@ func ExampleNoCert() {
 			Url:       true,
 			Host:      "1.2.3.4",
 			NoCert:    true,
+			Version:      1,
 		},
 	}
 	displayLink(c)
 
 	// Output: lndconnect://1.2.3.4:0?macaroon=AgEDbG5kArsBAwoQ3_I9f6kgSE6aUPd85lWpOBIBMBoWCgdhZGRyZXNzEgRyZWFkEgV3cml0ZRoTCgRpbmZvEgRyZWFkEgV3cml0ZRoXCghpbnZvaWNlcxIEcmVhZBIFd3JpdGUaFgoHbWVzc2FnZRIEcmVhZBIFd3JpdGUaFwoIb2ZmY2hhaW4SBHJlYWQSBXdyaXRlGhYKB29uY2hhaW4SBHJlYWQSBXdyaXRlGhQKBXBlZXJzEgRyZWFkEgV3cml0ZQAABiAiUTBv3Eh6iDbdjmXCfNxp4HBEcOYNzXhrm-ncLHf5jA
+}
+
+func ExampleLocalhostV2() {
+	c := &config{
+		TLSCertPath:  "testdata/tls.cert",
+		AdminMacPath: "testdata/admin.macaroon",
+		LndConnect: &lndConnectConfig{
+			Localhost: true,
+			Url:       true,
+			Version:      2,
+		},
+	}
+	displayLink(c)
+
+	// Output: lndconn://127.0.0.1:0?c=somNeor-nJza1UFoBULswg6lRo3f1_-euBY7zV2DIUk&m=AgEDbG5kArsBAwoQ3_I9f6kgSE6aUPd85lWpOBIBMBoWCgdhZGRyZXNzEgRyZWFkEgV3cml0ZRoTCgRpbmZvEgRyZWFkEgV3cml0ZRoXCghpbnZvaWNlcxIEcmVhZBIFd3JpdGUaFgoHbWVzc2FnZRIEcmVhZBIFd3JpdGUaFwoIb2ZmY2hhaW4SBHJlYWQSBXdyaXRlGhYKB29uY2hhaW4SBHJlYWQSBXdyaXRlGhQKBXBlZXJzEgRyZWFkEgV3cml0ZQAABiAiUTBv3Eh6iDbdjmXCfNxp4HBEcOYNzXhrm-ncLHf5jA&v=2
+}
+
+func ExampleQueryV2() {
+	c := &config{
+		TLSCertPath:  "testdata/tls.cert",
+		AdminMacPath: "testdata/admin.macaroon",
+		LndConnect: &lndConnectConfig{
+			Localhost: true,
+			Url:       true,
+			Query:     arrayFlags{"test=abc"},
+			Version:      2,
+		},
+	}
+	displayLink(c)
+
+	// Output: lndconn://127.0.0.1:0?c=somNeor-nJza1UFoBULswg6lRo3f1_-euBY7zV2DIUk&m=AgEDbG5kArsBAwoQ3_I9f6kgSE6aUPd85lWpOBIBMBoWCgdhZGRyZXNzEgRyZWFkEgV3cml0ZRoTCgRpbmZvEgRyZWFkEgV3cml0ZRoXCghpbnZvaWNlcxIEcmVhZBIFd3JpdGUaFgoHbWVzc2FnZRIEcmVhZBIFd3JpdGUaFwoIb2ZmY2hhaW4SBHJlYWQSBXdyaXRlGhYKB29uY2hhaW4SBHJlYWQSBXdyaXRlGhQKBXBlZXJzEgRyZWFkEgV3cml0ZQAABiAiUTBv3Eh6iDbdjmXCfNxp4HBEcOYNzXhrm-ncLHf5jA&test=abc&v=2
+}
+
+func ExamplePortV2() {
+	c := &config{
+		TLSCertPath:  "testdata/tls.cert",
+		AdminMacPath: "testdata/admin.macaroon",
+		LndConnect: &lndConnectConfig{
+			Localhost: true,
+			Url:       true,
+			Port:      123,
+			Version:      2,
+		},
+	}
+	displayLink(c)
+
+	// Output: lndconn://127.0.0.1:123?c=somNeor-nJza1UFoBULswg6lRo3f1_-euBY7zV2DIUk&m=AgEDbG5kArsBAwoQ3_I9f6kgSE6aUPd85lWpOBIBMBoWCgdhZGRyZXNzEgRyZWFkEgV3cml0ZRoTCgRpbmZvEgRyZWFkEgV3cml0ZRoXCghpbnZvaWNlcxIEcmVhZBIFd3JpdGUaFgoHbWVzc2FnZRIEcmVhZBIFd3JpdGUaFwoIb2ZmY2hhaW4SBHJlYWQSBXdyaXRlGhYKB29uY2hhaW4SBHJlYWQSBXdyaXRlGhQKBXBlZXJzEgRyZWFkEgV3cml0ZQAABiAiUTBv3Eh6iDbdjmXCfNxp4HBEcOYNzXhrm-ncLHf5jA&v=2
+}
+
+func ExampleHostV2() {
+	c := &config{
+		TLSCertPath:  "testdata/tls.cert",
+		AdminMacPath: "testdata/admin.macaroon",
+		LndConnect: &lndConnectConfig{
+			Localhost: true,
+			Url:       true,
+			Host:      "1.2.3.4",
+			Version:      2,
+		},
+	}
+	displayLink(c)
+
+	// Output: lndconn://1.2.3.4:0?c=somNeor-nJza1UFoBULswg6lRo3f1_-euBY7zV2DIUk&m=AgEDbG5kArsBAwoQ3_I9f6kgSE6aUPd85lWpOBIBMBoWCgdhZGRyZXNzEgRyZWFkEgV3cml0ZRoTCgRpbmZvEgRyZWFkEgV3cml0ZRoXCghpbnZvaWNlcxIEcmVhZBIFd3JpdGUaFgoHbWVzc2FnZRIEcmVhZBIFd3JpdGUaFwoIb2ZmY2hhaW4SBHJlYWQSBXdyaXRlGhYKB29uY2hhaW4SBHJlYWQSBXdyaXRlGhQKBXBlZXJzEgRyZWFkEgV3cml0ZQAABiAiUTBv3Eh6iDbdjmXCfNxp4HBEcOYNzXhrm-ncLHf5jA&v=2
+}
+
+func ExampleNoCertV2() {
+	c := &config{
+		TLSCertPath:  "testdata/tls.cert",
+		AdminMacPath: "testdata/admin.macaroon",
+		LndConnect: &lndConnectConfig{
+			Localhost: true,
+			Url:       true,
+			Host:      "1.2.3.4",
+			NoCert:    true,
+			Version:      2,
+		},
+	}
+	displayLink(c)
+
+	// Output: lndconn://1.2.3.4:0?m=AgEDbG5kArsBAwoQ3_I9f6kgSE6aUPd85lWpOBIBMBoWCgdhZGRyZXNzEgRyZWFkEgV3cml0ZRoTCgRpbmZvEgRyZWFkEgV3cml0ZRoXCghpbnZvaWNlcxIEcmVhZBIFd3JpdGUaFgoHbWVzc2FnZRIEcmVhZBIFd3JpdGUaFwoIb2ZmY2hhaW4SBHJlYWQSBXdyaXRlGhYKB29uY2hhaW4SBHJlYWQSBXdyaXRlGhQKBXBlZXJzEgRyZWFkEgV3cml0ZQAABiAiUTBv3Eh6iDbdjmXCfNxp4HBEcOYNzXhrm-ncLHf5jA&v=2
 }
