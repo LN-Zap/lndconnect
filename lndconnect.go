@@ -4,14 +4,15 @@ import (
 	b64 "encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"image/color"
 	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
 	"strings"
 
-	"github.com/Baozisoftware/qrcode-terminal-go"
-	"github.com/glendc/go-external-ip"
+	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
+	externalip "github.com/glendc/go-external-ip"
 	"github.com/skip2/go-qrcode"
 )
 
@@ -126,10 +127,11 @@ func displayLink(loadedConfig *config) {
 	if loadedConfig.LndConnect.Url {
 		fmt.Println(u.String())
 	} else if loadedConfig.LndConnect.Image {
-		qrcode.WriteFile(u.String(), qrcode.Medium, 512, "lndconnect-qr.png")
+		BrightGreen := color.RGBA{95, 191, 95, 255}
+		qrcode.WriteColorFile(u.String(), qrcode.Low, 512, BrightGreen, color.Black, "lndconnect-qr.png")
 		fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
 	} else {
-		obj := qrcodeTerminal.New()
+		obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightGreen, qrcodeTerminal.QRCodeRecoveryLevels.Low)
 		obj.Get(u.String()).Print()
 		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
 	}
