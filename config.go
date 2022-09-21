@@ -25,6 +25,8 @@ const (
 	defaultReadMacFilename    = "readonly.macaroon"
 	defaultInvoiceMacFilename = "invoice.macaroon"
 	defaultRPCPort            = 10009
+	defaultRESTPort           = 8080
+	defaultRESTKeyFileName    = "rest_onion_private_key"
 )
 
 var (
@@ -32,6 +34,7 @@ var (
 	defaultConfigFile  = filepath.Join(defaultLndDir, defaultConfigFilename)
 	defaultDataDir     = filepath.Join(defaultLndDir, defaultDataDirname)
 	defaultTLSCertPath = filepath.Join(defaultLndDir, defaultTLSCertFilename)
+	defaultRESTKeyPath = filepath.Join(defaultLndDir, defaultRESTKeyFileName)
 )
 
 type chainConfig struct {
@@ -42,19 +45,29 @@ type chainConfig struct {
 	RegTest  bool `long:"regtest" description:"Use the regression test network"`
 }
 
+type torConfig struct {
+	Active          bool   `long:"active" description:"Allow outbound and inbound connections to be routed through Tor"`
+	V3              bool   `long:"v3" description:"Automatically set up a v3 onion service to listen for inbound connections"`
+	Control         string `long:"control" description:"The host:port that Tor is listening on for Tor control connections"`
+	TargetIPAddress string `long:"targetipaddress" description:"IP address that Tor should use as the target of the hidden service"`
+	Password        string `long:"password" description:"If provided, the HASHEDPASSWORD authentication method will be used instead of the SAFECOOKIE one"`
+	RESTKeyPath     string `short:"r" long:"restkeypath" description:"The path to the private key of the onion service being created"`
+}
+
 type arrayFlags []string
 
 type lndConnectConfig struct {
-	LocalIp   bool       `short:"i" long:"localip" description:"Include local ip in QRCode"`
-	Localhost bool       `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
-	Host      string     `long:"host" description:"Use specific host name"`
-	NoCert    bool       `long:"nocert" description:"Don't include the certificate"`
-	Port      uint16     `short:"p" long:"port" description:"Use this port"`
-	Url       bool       `short:"j" long:"url" description:"Display url instead of a QRCode"`
-	Image     bool       `short:"o" long:"image" description:"Output QRCode to file"`
-	Invoice   bool       `long:"invoice" description:"Use invoice macaroon"`
-	Readonly  bool       `long:"readonly" description:"Use readonly macaroon"`
-	Query     arrayFlags `short:"q" long:"query" description:"Add additional url query parameters"`
+	LocalIp     bool       `short:"i" long:"localip" description:"Include local ip in QRCode"`
+	Localhost   bool       `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
+	Host        string     `long:"host" description:"Use specific host name"`
+	NoCert      bool       `long:"nocert" description:"Don't include the certificate"`
+	Port        uint16     `short:"p" long:"port" description:"Use this port"`
+	Url         bool       `short:"j" long:"url" description:"Display url instead of a QRCode"`
+	Image       bool       `short:"o" long:"image" description:"Output QRCode to file"`
+	Invoice     bool       `long:"invoice" description:"Use invoice macaroon"`
+	Readonly    bool       `long:"readonly" description:"Use readonly macaroon"`
+	Query       arrayFlags `short:"q" long:"query" description:"Add additional url query parameters"`
+	CreateOnion bool       `short:"c" long:"createonion" description:"Create onion v3 hidden service to access REST interface."`
 }
 
 // config defines the configuration options for lndconnect.
@@ -64,16 +77,19 @@ type lndConnectConfig struct {
 type config struct {
 	LndConnect *lndConnectConfig `group:"LndConnect"`
 
-	LndDir         string `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
-	ConfigFile     string `long:"C" long:"configfile" description:"Path to configuration file"`
-	DataDir        string `short:"b" long:"datadir" description:"The directory to find lnd's data within"`
-	TLSCertPath    string `long:"tlscertpath" description:"Path to read the TLS certificate from"`
-	AdminMacPath   string `long:"adminmacaroonpath" description:"Path to read the admin macaroon from"`
-	ReadMacPath    string `long:"readonlymacaroonpath" description:"Path to read the read-only macaroon from"`
-	InvoiceMacPath string `long:"invoicemacaroonpath" description:"Path to read the invoice-only macaroon from"`
+	LndDir           string   `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
+	ConfigFile       string   `long:"C" long:"configfile" description:"Path to configuration file"`
+	DataDir          string   `short:"b" long:"datadir" description:"The directory to find lnd's data within"`
+	TLSCertPath      string   `long:"tlscertpath" description:"Path to read the TLS certificate from"`
+	AdminMacPath     string   `long:"adminmacaroonpath" description:"Path to read the admin macaroon from"`
+	ReadMacPath      string   `long:"readonlymacaroonpath" description:"Path to read the read-only macaroon from"`
+	InvoiceMacPath   string   `long:"invoicemacaroonpath" description:"Path to read the invoice-only macaroon from"`
+	RawRESTListeners []string `long:"restlisten" description:"Interface/Port/Socket listening for REST connections"`
 
 	Bitcoin  *chainConfig `group:"Bitcoin" namespace:"bitcoin"`
 	Litecoin *chainConfig `group:"Litecoin" namespace:"litecoin"`
+
+	Tor *torConfig `group:"Tor" namespace:"tor"`
 
 	// The following lines we only need to be able to parse the
 	// configuration INI file without errors. The content will be ignored.
@@ -83,7 +99,6 @@ type config struct {
 	LtcdMode      *chainConfig `hidden:"true" group:"ltcd" namespace:"ltcd"`
 	LitecoindMode *chainConfig `hidden:"true" group:"litecoind" namespace:"litecoind"`
 	Autopilot     *chainConfig `hidden:"true" group:"Autopilot" namespace:"autopilot"`
-	Tor           *chainConfig `hidden:"true" group:"Tor" namespace:"tor"`
 	Hodl          *chainConfig `hidden:"true" group:"hodl" namespace:"hodl"`
 
 	net tor.Net
@@ -106,7 +121,10 @@ func loadConfig() (*config, error) {
 		ConfigFile:  defaultConfigFile,
 		DataDir:     defaultDataDir,
 		TLSCertPath: defaultTLSCertPath,
-		net:         &tor.ClearNet{},
+		Tor: &torConfig{
+			RESTKeyPath: defaultRESTKeyPath,
+		},
+		net: &tor.ClearNet{},
 	}
 
 	// Pre-parse the command line options to pick up an alternative config
@@ -130,6 +148,7 @@ func loadConfig() (*config, error) {
 		}
 		preCfg.DataDir = filepath.Join(lndDir, defaultDataDirname)
 		preCfg.TLSCertPath = filepath.Join(lndDir, defaultTLSCertFilename)
+		preCfg.Tor.RESTKeyPath = filepath.Join(lndDir, defaultRESTKeyFileName)
 	}
 
 	// Next, load any additional configuration options from the file.
