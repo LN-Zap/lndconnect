@@ -50,8 +50,8 @@ type torConfig struct {
 	V3              bool   `long:"v3" description:"Automatically set up a v3 onion service to listen for inbound connections"`
 	Control         string `long:"control" description:"The host:port that Tor is listening on for Tor control connections"`
 	TargetIPAddress string `long:"targetipaddress" description:"IP address that Tor should use as the target of the hidden service"`
-	Password        string `long:"password" description:"If provided, the HASHEDPASSWORD authentication method will be used instead of the SAFECOOKIE one."`
-	RESTKeyPath     string `short:"r" long:"restkeypath" description:"The path to the private key of the onion service being created if provided."`
+	Password        string `long:"password" description:"If provided, the HASHEDPASSWORD authentication method will be used instead of the SAFECOOKIE one"`
+	RESTKeyPath     string `short:"r" long:"restkeypath" description:"The path to the private key of the onion service being created"`
 }
 
 type arrayFlags []string
