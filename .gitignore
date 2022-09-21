@@ -12,3 +12,8 @@
 *.out
 
 build
+
+# Development files and folders
+.data
+lndconnect
+*.png
