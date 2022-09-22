@@ -1,4 +1,4 @@
-module github.com/LN-Zap/lndconnect
+module github.com/roshii/lndconnect
 
 go 1.16
 
