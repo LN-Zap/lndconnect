@@ -80,7 +80,7 @@ type config struct {
 	LndConnect *lndConnectConfig `group:"LndConnect"`
 
 	LndDir           string   `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
-	ConfigFile       string   `long:"C" long:"configfile" description:"Path to configuration file"`
+	ConfigFile       string   `short:"C" long:"configfile" description:"Path to configuration file"`
 	DataDir          string   `short:"b" long:"datadir" description:"The directory to find lnd's data within"`
 	TLSCertPath      string   `long:"tlscertpath" description:"Path to read the TLS certificate from"`
 	AdminMacPath     string   `long:"adminmacaroonpath" description:"Path to read the admin macaroon from"`
