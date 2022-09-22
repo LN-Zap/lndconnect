@@ -102,7 +102,7 @@ func getURI(loadedConfig *config) (string, error) {
 		queryParts := strings.Split(s, "=")
 
 		if len(queryParts) != 2 {
-			return "", fmt.Errorf("Invalid Query Argument: %s", s)
+			return "", fmt.Errorf("invalid Query Argument: %s", s)
 		}
 
 		q.Add(queryParts[0], queryParts[1])

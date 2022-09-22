@@ -197,7 +197,7 @@ func loadConfig() (*config, error) {
 			networkName = "simnet"
 		}
 		if numNets > 1 {
-			str := "The mainnet, testnet, regtest, and " +
+			str := "the mainnet, testnet, regtest, and " +
 				"simnet params can't be used together -- " +
 				"choose one of the four"
 			err := fmt.Errorf(str)
