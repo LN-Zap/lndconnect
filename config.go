@@ -6,9 +6,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -276,4 +278,17 @@ func cleanAndExpandPath(path string) string {
 	// NOTE: The os.ExpandEnv doesn't work with Windows-style %VARIABLE%,
 	// but the variables can still be expanded via POSIX-style $VARIABLE.
 	return filepath.Clean(os.ExpandEnv(path))
+}
+
+// updates config with onion host and port
+func updateHostAddrConfig(addr string, loadedConfig *config) error {
+	parsedAddr := strings.Split(addr, ":")
+	loadedConfig.LndConnect.Host = parsedAddr[0]
+	parsedPort, err := strconv.ParseUint(parsedAddr[1], 10, 16)
+	if err != nil {
+		log.Fatal(err)
+	}
+	loadedConfig.LndConnect.Port = uint16(parsedPort)
+	loadedConfig.LndConnect.NoCert = true
+	return nil
 }
