@@ -4,13 +4,16 @@ import (
 	b64 "encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"image/color"
 	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
 	"strings"
 
+	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
 	externalip "github.com/glendc/go-external-ip"
+	"github.com/skip2/go-qrcode"
 )
 
 func getLocalIP() string {
@@ -109,4 +112,19 @@ func getURI(loadedConfig *config) (string, error) {
 
 	fmt.Println("\nURI generated successfully.")
 	return u.String(), nil
+}
+
+func getQR(uri string, printToFile bool) error {
+	// Generate URI
+	if printToFile {
+		BrightGreen := color.RGBA{95, 191, 95, 255}
+		qrcode.WriteColorFile(uri, qrcode.Low, 512, BrightGreen, color.Black, defaultQRFilePath)
+		fmt.Printf("\nWrote QR Code to file \"%s\"", defaultQRFilePath)
+
+	} else {
+		obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightGreen, qrcodeTerminal.QRCodeRecoveryLevels.Low)
+		obj.Get(uri).Print()
+		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
+	}
+	return nil
 }
