@@ -44,8 +44,8 @@ func main() {
 
 	} else if loadedConfig.LndConnect.Image {
 		BrightGreen := color.RGBA{95, 191, 95, 255}
-		qrcode.WriteColorFile(uri, qrcode.Low, 512, BrightGreen, color.Black, "lndconnect-qr.png")
-		fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
+		qrcode.WriteColorFile(uri, qrcode.Low, 512, BrightGreen, color.Black, defaultQRFilePath)
+		fmt.Printf("\nWrote QR Code to file \"%s\"", defaultQRFilePath)
 
 	} else {
 		obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightGreen, qrcodeTerminal.QRCodeRecoveryLevels.Low)

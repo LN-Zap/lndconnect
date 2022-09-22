@@ -27,6 +27,7 @@ const (
 	defaultRPCPort            = 10009
 	defaultRESTPort           = 8080
 	defaultRESTKeyFileName    = "rest_onion_private_key"
+	defaultQRFileName         = "lndconnect-qr.png"
 )
 
 var (
@@ -35,6 +36,7 @@ var (
 	defaultDataDir     = filepath.Join(defaultLndDir, defaultDataDirname)
 	defaultTLSCertPath = filepath.Join(defaultLndDir, defaultTLSCertFilename)
 	defaultRESTKeyPath = filepath.Join(defaultLndDir, defaultRESTKeyFileName)
+	defaultQRFilePath  = filepath.Join(defaultLndDir, defaultQRFileName)
 )
 
 type chainConfig struct {
