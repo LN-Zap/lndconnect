@@ -5,7 +5,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"image/color"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -64,7 +63,7 @@ func getURI(loadedConfig *config) (string, error) {
 
 	// cert
 	if !loadedConfig.LndConnect.NoCert {
-		certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
+		certBytes, err := os.ReadFile(loadedConfig.TLSCertPath)
 		if err != nil {
 			return "", err
 		}
@@ -82,11 +81,11 @@ func getURI(loadedConfig *config) (string, error) {
 	// macaroon
 	var macBytes []byte
 	if loadedConfig.LndConnect.Invoice {
-		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
+		macBytes, err = os.ReadFile(loadedConfig.InvoiceMacPath)
 	} else if loadedConfig.LndConnect.Readonly {
-		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
+		macBytes, err = os.ReadFile(loadedConfig.ReadMacPath)
 	} else {
-		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
+		macBytes, err = os.ReadFile(loadedConfig.AdminMacPath)
 	}
 
 	if err != nil {
