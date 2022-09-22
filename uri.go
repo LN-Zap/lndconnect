@@ -48,7 +48,7 @@ func getURI(loadedConfig *config) (string, error) {
 	ipString := ""
 	if loadedConfig.LndConnect.Host != "" {
 		ipString = loadedConfig.LndConnect.Host
-	} else if loadedConfig.LndConnect.LocalIp {
+	} else if loadedConfig.LndConnect.LocalIP {
 		ipString = getLocalIP()
 	} else if loadedConfig.LndConnect.Localhost {
 		ipString = "127.0.0.1"
