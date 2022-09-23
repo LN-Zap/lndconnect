@@ -8,7 +8,7 @@ func ExampleLocalhost(t *testing.T) {
 		AdminMacPath: "testdata/admin.macaroon",
 		LndConnect: &lndConnectConfig{
 			Localhost: true,
-			Url:       true,
+			URL:       true,
 		},
 	}
 
@@ -25,7 +25,7 @@ func ExampleQuery(t *testing.T) {
 		AdminMacPath: "testdata/admin.macaroon",
 		LndConnect: &lndConnectConfig{
 			Localhost: true,
-			Url:       true,
+			URL:       true,
 			Query:     arrayFlags{"test=abc"},
 		},
 	}
@@ -43,7 +43,7 @@ func ExamplePort(t *testing.T) {
 		AdminMacPath: "testdata/admin.macaroon",
 		LndConnect: &lndConnectConfig{
 			Localhost: true,
-			Url:       true,
+			URL:       true,
 			Port:      123,
 		},
 	}
@@ -61,7 +61,7 @@ func ExampleHost(t *testing.T) {
 		AdminMacPath: "testdata/admin.macaroon",
 		LndConnect: &lndConnectConfig{
 			Localhost: true,
-			Url:       true,
+			URL:       true,
 			Host:      "1.2.3.4",
 		},
 	}
@@ -79,7 +79,7 @@ func ExampleNoCert(t *testing.T) {
 		AdminMacPath: "testdata/admin.macaroon",
 		LndConnect: &lndConnectConfig{
 			Localhost: true,
-			Url:       true,
+			URL:       true,
 			Host:      "1.2.3.4",
 			NoCert:    true,
 		},

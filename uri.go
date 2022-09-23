@@ -4,13 +4,16 @@ import (
 	b64 "encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"image/color"
+	"log"
 	"net"
 	"net/url"
 	"os"
 	"strings"
 
+	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
 	externalip "github.com/glendc/go-external-ip"
+	"github.com/skip2/go-qrcode"
 )
 
 func getLocalIP() string {
@@ -32,8 +35,7 @@ func getPublicIP() string {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	ip, err := consensus.ExternalIP()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	return ip.String()
@@ -46,7 +48,7 @@ func getURI(loadedConfig *config) (string, error) {
 	ipString := ""
 	if loadedConfig.LndConnect.Host != "" {
 		ipString = loadedConfig.LndConnect.Host
-	} else if loadedConfig.LndConnect.LocalIp {
+	} else if loadedConfig.LndConnect.LocalIP {
 		ipString = getLocalIP()
 	} else if loadedConfig.LndConnect.Localhost {
 		ipString = "127.0.0.1"
@@ -61,14 +63,14 @@ func getURI(loadedConfig *config) (string, error) {
 
 	// cert
 	if !loadedConfig.LndConnect.NoCert {
-		certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
+		certBytes, err := os.ReadFile(loadedConfig.TLSCertPath)
 		if err != nil {
 			return "", err
 		}
 
 		block, _ := pem.Decode(certBytes)
 		if block == nil || block.Type != "CERTIFICATE" {
-			fmt.Println("failed to decode PEM block containing certificate")
+			log.Println("failed to decode PEM block containing certificate")
 		}
 
 		certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
@@ -79,11 +81,11 @@ func getURI(loadedConfig *config) (string, error) {
 	// macaroon
 	var macBytes []byte
 	if loadedConfig.LndConnect.Invoice {
-		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
+		macBytes, err = os.ReadFile(loadedConfig.InvoiceMacPath)
 	} else if loadedConfig.LndConnect.Readonly {
-		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
+		macBytes, err = os.ReadFile(loadedConfig.ReadMacPath)
 	} else {
-		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
+		macBytes, err = os.ReadFile(loadedConfig.AdminMacPath)
 	}
 
 	if err != nil {
@@ -99,7 +101,7 @@ func getURI(loadedConfig *config) (string, error) {
 		queryParts := strings.Split(s, "=")
 
 		if len(queryParts) != 2 {
-			return "", fmt.Errorf("Invalid Query Argument: %s", s)
+			return "", fmt.Errorf("invalid Query Argument: %s", s)
 		}
 
 		q.Add(queryParts[0], queryParts[1])
@@ -107,6 +109,29 @@ func getURI(loadedConfig *config) (string, error) {
 
 	u.RawQuery = q.Encode()
 
-	fmt.Println("\nURI generated successfully.")
+	log.Println("lndconnect URI generated successfully")
 	return u.String(), nil
+}
+
+func getQR(uri string, printToFile bool) error {
+	var err error
+	// Generate URI
+	if printToFile {
+		BrightGreen := color.RGBA{95, 191, 95, 255}
+		err = qrcode.WriteColorFile(
+			uri,
+			qrcode.Low,
+			512,
+			BrightGreen,
+			color.Black,
+			defaultQRFilePath,
+		)
+		log.Printf("Wrote QR Code to file \"%s\"", defaultQRFilePath)
+
+	} else {
+		obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightGreen, qrcodeTerminal.QRCodeRecoveryLevels.Low)
+		obj.Get(uri).Print()
+		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
+	}
+	return err
 }
