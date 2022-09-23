@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,9 +22,24 @@ func main() {
 	// specified, make a tor controller and pass it into the REST controller server
 	var torController *tor.Controller
 	if loadedConfig.LndConnect.CreateOnion && loadedConfig.Tor.Active && loadedConfig.Tor.V3 {
+		var targetIPAddress string
+		if net.ParseIP(loadedConfig.Tor.TargetIPAddress) == nil {
+			addrs, err := loadedConfig.net.LookupHost(loadedConfig.Tor.TargetIPAddress)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			targetIPAddress = addrs[0]
+			log.Printf(
+				"`tor.targetipaddress` doesn't define an IP address, hostname %s was resolved to %s",
+				loadedConfig.Tor.TargetIPAddress,
+				targetIPAddress,
+			)
+		} else {
+			targetIPAddress = loadedConfig.Tor.TargetIPAddress
+		}
 		torController = tor.NewController(
 			loadedConfig.Tor.Control,
-			loadedConfig.Tor.TargetIPAddress,
+			targetIPAddress,
 			loadedConfig.Tor.Password,
 		)
 
