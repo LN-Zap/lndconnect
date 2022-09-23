@@ -40,4 +40,7 @@ lndconnect
     --adminmacaroonpath=    Path to read the admin macaroon from
     --readonlymacaroonpath= Path to read the read-only macaroon from
     --invoicemacaroonpath=  Path to read the invoice-only macaroon from
+
+-c, --createonion           Create onion hidden service to access REST interface
+-r, --tor.restkeypath=      The path to the private key of the onion service being created
 ```
