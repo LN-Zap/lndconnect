@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"image/color"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -34,8 +35,7 @@ func getPublicIP() string {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	ip, err := consensus.ExternalIP()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	return ip.String()
@@ -70,7 +70,7 @@ func getURI(loadedConfig *config) (string, error) {
 
 		block, _ := pem.Decode(certBytes)
 		if block == nil || block.Type != "CERTIFICATE" {
-			fmt.Println("failed to decode PEM block containing certificate")
+			log.Println("failed to decode PEM block containing certificate")
 		}
 
 		certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
@@ -109,7 +109,7 @@ func getURI(loadedConfig *config) (string, error) {
 
 	u.RawQuery = q.Encode()
 
-	fmt.Println("\nURI generated successfully.")
+	log.Println("lndconnect URI generated successfully")
 	return u.String(), nil
 }
 
@@ -126,7 +126,7 @@ func getQR(uri string, printToFile bool) error {
 			color.Black,
 			defaultQRFilePath,
 		)
-		fmt.Printf("\nWrote QR Code to file \"%s\"", defaultQRFilePath)
+		log.Printf("Wrote QR Code to file \"%s\"", defaultQRFilePath)
 
 	} else {
 		obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightGreen, qrcodeTerminal.QRCodeRecoveryLevels.Low)

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -52,8 +52,8 @@ func createNewHiddenService(loadedConfig *config, torController *tor.Controller)
 		return err
 	}
 	addr := onionAddr.String()
-	fmt.Println("\nOnion service created for LND REST interface, address reads:")
-	fmt.Println(addr)
+	log.Println("Onion service created for LND REST interface")
+	log.Printf("serviceID: %v", addr)
 
 	err = updateHostAddrConfig(addr, loadedConfig)
 
