@@ -1,17 +1,10 @@
-BINARY_NAME=lndconnect
-GOARCH=amd64
-GOOS=linux
-
-default: run
-
-build:
-	go build -o ${BINARY_NAME}
-
-run: build
-	./${BINARY_NAME} --lnddir .data -j -c
+default: install
 
 dep:
-	go mod download
+	go get ./...
 
-test: dep
+install: dep
+	go install -v ./...
+
+test:
 	go test -v
