@@ -10,8 +10,6 @@ import (
 	"github.com/lightningnetwork/lnd/tor"
 )
 
-// var wg sync.WaitGroup
-
 func main() {
 	loadedConfig, err := loadConfig()
 	if err != nil {
@@ -48,14 +46,12 @@ func main() {
 		if err := torController.Start(); err != nil {
 			log.Fatalf("error starting tor controller: %v", err)
 		}
-		// defer func() {
-		// 	if err := torController.Stop(); err != nil {
-		// 		log.Printf("error stopping tor controller: %v", err)
-		// 	}
-		// }()
-	}
+		defer func() {
+			if err := torController.Stop(); err != nil {
+				log.Printf("error stopping tor controller: %v", err)
+			}
+		}()
 
-	if torController != nil {
 		if err := createNewHiddenService(loadedConfig, torController); err != nil {
 			log.Fatal(err)
 		}
@@ -78,20 +74,17 @@ func main() {
 	}
 	if torController != nil {
 		cancelChan := make(chan os.Signal, 1)
+		done := make(chan bool, 1)
+
 		// catch SIGINT, SIGQUIT or SIGETRM
 		signal.Notify(cancelChan, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 
-		done := make(chan bool, 1)
 		go func() {
 			sig := <-cancelChan
-			log.Printf("Caught SIGTERM %v", sig)
+			log.Printf("Caught %v signal", sig)
 			done <- true
 		}()
 		<-done
-		log.Println("exiting...")
-		if err := torController.Stop(); err != nil {
-			log.Printf("error stopping tor controller: %v", err)
-		}
-
+		log.Println("lndconnect is shutting down now...")
 	}
 }
