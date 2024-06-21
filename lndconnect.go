@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"crypto/sha256"
+	"strconv"
 
 	"github.com/Baozisoftware/qrcode-terminal-go"
 	"github.com/glendc/go-external-ip"
@@ -54,83 +56,169 @@ func main() {
 func displayLink(loadedConfig *config) {
 	var err error
 
-	// host
-	ipString := ""
-	if loadedConfig.LndConnect.Host != "" {
-		ipString = loadedConfig.LndConnect.Host
-	} else if loadedConfig.LndConnect.LocalIp {
-		ipString = getLocalIP()
-	} else if loadedConfig.LndConnect.Localhost {
-		ipString = "127.0.0.1"
-	} else {
-		ipString = getPublicIP()
-	}
+	if loadedConfig.LndConnect.Version == 1 {
+		// host
+		ipString := ""
+		if loadedConfig.LndConnect.Host != "" {
+			ipString = loadedConfig.LndConnect.Host
+		} else if loadedConfig.LndConnect.LocalIp {
+			ipString = getLocalIP()
+		} else if loadedConfig.LndConnect.Localhost {
+			ipString = "127.0.0.1"
+		} else {
+			ipString = getPublicIP()
+		}
 
-	ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
+		ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
 
-	u := url.URL{Scheme: "lndconnect", Host: ipString}
-	q := u.Query()
+		u := url.URL{Scheme: "lndconnect", Host: ipString}
+		q := u.Query()
 
-	// cert
-	if !loadedConfig.LndConnect.NoCert {
-		certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
+		// cert
+		if !loadedConfig.LndConnect.NoCert {
+			certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			block, _ := pem.Decode(certBytes)
+			if block == nil || block.Type != "CERTIFICATE" {
+				fmt.Println("failed to decode PEM block containing certificate")
+			}
+
+			certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
+
+			q.Add("cert", certificate)
+		}
+
+		// macaroon
+		var macBytes []byte
+		if loadedConfig.LndConnect.Invoice {
+			macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
+		} else if loadedConfig.LndConnect.Readonly {
+			macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
+		} else {
+			macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
+		}
+
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		block, _ := pem.Decode(certBytes)
-		if block == nil || block.Type != "CERTIFICATE" {
-			fmt.Println("failed to decode PEM block containing certificate")
+		macaroonB64 := b64.RawURLEncoding.EncodeToString([]byte(macBytes))
+
+		q.Add("macaroon", macaroonB64)
+
+		// custom query
+		for _, s := range loadedConfig.LndConnect.Query {
+			queryParts := strings.Split(s, "=")
+
+			if len(queryParts) != 2 {
+				fmt.Println("Invalid Query Argument:", s)
+				return
+			}
+
+			q.Add(queryParts[0], queryParts[1])
 		}
 
-		certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
+		u.RawQuery = q.Encode()
 
-		q.Add("cert", certificate)
-	}
+		// generate link / QR Code
+		if loadedConfig.LndConnect.Url {
+			fmt.Println(u.String())
+		} else if loadedConfig.LndConnect.Image {
+			qrcode.WriteFile(u.String(), qrcode.Low, 512, "lndconnect-qr.png")
+			fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
+		} else {
+			obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite,qrcodeTerminal.QRCodeRecoveryLevels.Low)
+			obj.Get(u.String()).Print()
+			fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
+		}
+	} else { // Version 2 and higher...
+		// host
+		ipString := ""
+		if loadedConfig.LndConnect.Host != "" {
+			ipString = loadedConfig.LndConnect.Host
+		} else if loadedConfig.LndConnect.LocalIp {
+			ipString = getLocalIP()
+		} else if loadedConfig.LndConnect.Localhost {
+			ipString = "127.0.0.1"
+		} else {
+			ipString = getPublicIP()
+		}
 
-	// macaroon
-	var macBytes []byte
-	if loadedConfig.LndConnect.Invoice {
-		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
-	} else if loadedConfig.LndConnect.Readonly {
-		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
-	} else {
-		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
-	}
+		ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+		u := url.URL{Scheme: "lndconn", Host: ipString}
+		q := u.Query()
 
-	macaroonB64 := b64.RawURLEncoding.EncodeToString([]byte(macBytes))
+		// version
+		q.Add("v", strconv.Itoa(int(loadedConfig.LndConnect.Version)))
 
-	q.Add("macaroon", macaroonB64)
+		// cert
+		if !loadedConfig.LndConnect.NoCert {
+			certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
-	// custom query
-	for _, s := range loadedConfig.LndConnect.Query {
-		queryParts := strings.Split(s, "=")
+			block, _ := pem.Decode(certBytes)
+			if block == nil || block.Type != "CERTIFICATE" {
+				fmt.Println("failed to decode PEM block containing certificate")
+			}
 
-		if len(queryParts) != 2 {
-			fmt.Println("Invalid Query Argument:", s)
+			hash := sha256.Sum256(block.Bytes)
+			certificate := b64.RawURLEncoding.EncodeToString(hash[:])
+
+			q.Add("c", certificate)
+		}
+
+		// macaroon
+		var macBytes []byte
+		if loadedConfig.LndConnect.Invoice {
+			macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
+		} else if loadedConfig.LndConnect.Readonly {
+			macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
+		} else {
+			macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
+		}
+
+		if err != nil {
+			fmt.Println(err)
 			return
 		}
 
-		q.Add(queryParts[0], queryParts[1])
-	}
+		macaroonB64 := b64.RawURLEncoding.EncodeToString([]byte(macBytes))
 
-	u.RawQuery = q.Encode()
+		q.Add("m", macaroonB64)
 
-	// generate link / QR Code
-	if loadedConfig.LndConnect.Url {
-		fmt.Println(u.String())
-	} else if loadedConfig.LndConnect.Image {
-		qrcode.WriteFile(u.String(), qrcode.Medium, 512, "lndconnect-qr.png")
-		fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
-	} else {
-		obj := qrcodeTerminal.New()
-		obj.Get(u.String()).Print()
-		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
+		// custom query
+		for _, s := range loadedConfig.LndConnect.Query {
+			queryParts := strings.Split(s, "=")
+
+			if len(queryParts) != 2 {
+				fmt.Println("Invalid Query Argument:", s)
+				return
+			}
+
+			q.Add(queryParts[0], queryParts[1])
+		}
+
+		u.RawQuery = q.Encode()
+
+		// generate link / QR Code
+		if loadedConfig.LndConnect.Url {
+			fmt.Println(u.String())
+		} else if loadedConfig.LndConnect.Image {
+			qrcode.WriteFile(u.String(), qrcode.Low, 512, "lndconnect-qr.png")
+			fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
+		} else {
+			obj := qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite,qrcodeTerminal.QRCodeRecoveryLevels.Low)
+			obj.Get(u.String()).Print()
+			fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
+		}
 	}
 }
