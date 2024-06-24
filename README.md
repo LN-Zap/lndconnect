@@ -12,6 +12,14 @@ cd $GOPATH/src/github.com/LN-Zap/lndconnect
 make
 ```
 
+Newer versions of GO require slightly different steps.
+
+```
+go install github.com/LN-Zap/lndconnect@latest
+cd $GOPATH/pkg/mod/github.com/\!l\!n-\!zap/lndconnect@v0.2.1
+make
+```
+
 ## Starting lndconnect
 
 ```
