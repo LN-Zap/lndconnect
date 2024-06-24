@@ -6,12 +6,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 
-	"github.com/btcsuite/btcutil"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/jessevdk/go-flags"
 	"github.com/lightningnetwork/lnd/tor"
 )
@@ -25,6 +27,9 @@ const (
 	defaultReadMacFilename    = "readonly.macaroon"
 	defaultInvoiceMacFilename = "invoice.macaroon"
 	defaultRPCPort            = 10009
+	defaultRESTPort           = 8080
+	defaultRESTKeyFileName    = "rest_onion_private_key"
+	defaultQRFileName         = "lndconnect-qr.png"
 )
 
 var (
@@ -32,29 +37,41 @@ var (
 	defaultConfigFile  = filepath.Join(defaultLndDir, defaultConfigFilename)
 	defaultDataDir     = filepath.Join(defaultLndDir, defaultDataDirname)
 	defaultTLSCertPath = filepath.Join(defaultLndDir, defaultTLSCertFilename)
+	defaultRESTKeyPath = filepath.Join(defaultLndDir, defaultRESTKeyFileName)
+	defaultQRFilePath  = filepath.Join(defaultLndDir, defaultQRFileName)
 )
 
 type chainConfig struct {
-	Active   bool `long:"active" description:"If the chain should be active or not"`
+	Active   bool `long:"active"  description:"If the chain should be active or not"`
 	MainNet  bool `long:"mainnet" description:"Use the main network"`
 	TestNet3 bool `long:"testnet" description:"Use the test network"`
-	SimNet   bool `long:"simnet" description:"Use the simulation test network"`
+	SimNet   bool `long:"simnet"  description:"Use the simulation test network"`
 	RegTest  bool `long:"regtest" description:"Use the regression test network"`
+}
+
+type torConfig struct {
+	Active          bool   `long:"active"          description:"Allow outbound and inbound connections to be routed through Tor"`
+	V3              bool   `long:"v3"              description:"Automatically set up a v3 onion service to listen for inbound connections"`
+	Control         string `long:"control"         description:"The host:port that Tor is listening on for Tor control connections"`
+	TargetIPAddress string `long:"targetipaddress" description:"IP address that Tor should use as the target of the hidden service"`
+	Password        string `long:"password"        description:"If provided, the HASHEDPASSWORD authentication method will be used instead of the SAFECOOKIE one."`
+	RESTKeyPath     string `long:"restkeypath"     description:"The path to the private key of the onion service being created if provided."                       short:"r"`
 }
 
 type arrayFlags []string
 
 type lndConnectConfig struct {
-	LocalIp   bool       `short:"i" long:"localip" description:"Include local ip in QRCode"`
-	Localhost bool       `short:"l" long:"localhost" description:"Use 127.0.0.1 for ip"`
-	Host      string     `long:"host" description:"Use specific host name"`
-	NoCert    bool       `long:"nocert" description:"Don't include the certificate"`
-	Port      uint16     `short:"p" long:"port" description:"Use this port"`
-	Url       bool       `short:"j" long:"url" description:"Display url instead of a QRCode"`
-	Image     bool       `short:"o" long:"image" description:"Output QRCode to file"`
-	Invoice   bool       `long:"invoice" description:"Use invoice macaroon"`
-	Readonly  bool       `long:"readonly" description:"Use readonly macaroon"`
-	Query     arrayFlags `short:"q" long:"query" description:"Add additional url query parameters"`
+	LocalIP     bool       `short:"i" long:"localip"     description:"Include local ip in QRCode"`
+	Localhost   bool       `short:"l" long:"localhost"   description:"Use 127.0.0.1 for ip"`
+	Host        string     `          long:"host"        description:"Use specific host name"`
+	NoCert      bool       `          long:"nocert"      description:"Don't include the certificate"`
+	Port        uint16     `short:"p" long:"port"        description:"Use this port"`
+	URL         bool       `short:"j" long:"url"         description:"Display url instead of a QRCode"`
+	Image       bool       `short:"o" long:"image"       description:"Output QRCode to file"`
+	Invoice     bool       `          long:"invoice"     description:"Use invoice macaroon"`
+	Readonly    bool       `          long:"readonly"    description:"Use readonly macaroon"`
+	Query       arrayFlags `short:"q" long:"query"       description:"Add additional url query parameters"`
+	CreateOnion bool       `short:"c" long:"createonion" description:"Create onion v3 hidden service to access REST interface."`
 }
 
 // config defines the configuration options for lndconnect.
@@ -64,27 +81,29 @@ type lndConnectConfig struct {
 type config struct {
 	LndConnect *lndConnectConfig `group:"LndConnect"`
 
-	LndDir         string `long:"lnddir" description:"The base directory that contains lnd's data, logs, configuration file, etc."`
-	ConfigFile     string `long:"C" long:"configfile" description:"Path to configuration file"`
-	DataDir        string `short:"b" long:"datadir" description:"The directory to find lnd's data within"`
-	TLSCertPath    string `long:"tlscertpath" description:"Path to read the TLS certificate from"`
-	AdminMacPath   string `long:"adminmacaroonpath" description:"Path to read the admin macaroon from"`
-	ReadMacPath    string `long:"readonlymacaroonpath" description:"Path to read the read-only macaroon from"`
-	InvoiceMacPath string `long:"invoicemacaroonpath" description:"Path to read the invoice-only macaroon from"`
+	LndDir           string   `long:"lnddir"               description:"The base directory that contains lnd's data, logs, configuration file, etc."`
+	ConfigFile       string   `long:"configfile"           description:"Path to configuration file"                                                  short:"C"`
+	DataDir          string   `long:"datadir"              description:"The directory to find lnd's data within"                                     short:"b"`
+	TLSCertPath      string   `long:"tlscertpath"          description:"Path to read the TLS certificate from"`
+	AdminMacPath     string   `long:"adminmacaroonpath"    description:"Path to read the admin macaroon from"`
+	ReadMacPath      string   `long:"readonlymacaroonpath" description:"Path to read the read-only macaroon from"`
+	InvoiceMacPath   string   `long:"invoicemacaroonpath"  description:"Path to read the invoice-only macaroon from"`
+	RawRESTListeners []string `long:"restlisten"           description:"Interface/Port/Socket listening for REST connections"`
 
-	Bitcoin  *chainConfig `group:"Bitcoin" namespace:"bitcoin"`
+	Bitcoin  *chainConfig `group:"Bitcoin"  namespace:"bitcoin"`
 	Litecoin *chainConfig `group:"Litecoin" namespace:"litecoin"`
+
+	Tor *torConfig `group:"Tor" namespace:"tor"`
 
 	// The following lines we only need to be able to parse the
 	// configuration INI file without errors. The content will be ignored.
-	BtcdMode      *chainConfig `hidden:"true" group:"btcd" namespace:"btcd"`
-	BitcoindMode  *chainConfig `hidden:"true" group:"bitcoind" namespace:"bitcoind"`
-	NeutrinoMode  *chainConfig `hidden:"true" group:"neutrino" namespace:"neutrino"`
-	LtcdMode      *chainConfig `hidden:"true" group:"ltcd" namespace:"ltcd"`
+	BtcdMode      *chainConfig `hidden:"true" group:"btcd"      namespace:"btcd"`
+	BitcoindMode  *chainConfig `hidden:"true" group:"bitcoind"  namespace:"bitcoind"`
+	NeutrinoMode  *chainConfig `hidden:"true" group:"neutrino"  namespace:"neutrino"`
+	LtcdMode      *chainConfig `hidden:"true" group:"ltcd"      namespace:"ltcd"`
 	LitecoindMode *chainConfig `hidden:"true" group:"litecoind" namespace:"litecoind"`
 	Autopilot     *chainConfig `hidden:"true" group:"Autopilot" namespace:"autopilot"`
-	Tor           *chainConfig `hidden:"true" group:"Tor" namespace:"tor"`
-	Hodl          *chainConfig `hidden:"true" group:"hodl" namespace:"hodl"`
+	Hodl          *chainConfig `hidden:"true" group:"hodl"      namespace:"hodl"`
 
 	net tor.Net
 }
@@ -93,10 +112,10 @@ type config struct {
 // line options.
 //
 // The configuration proceeds as follows:
-// 	1) Start with a default config with sane settings
-// 	2) Pre-parse the command line to check for an alternative config file
-// 	3) Load configuration file overwriting defaults with any specified options
-// 	4) Parse CLI options and overwrite/add any specified options
+//  1. Start with a default config with sane settings
+//  2. Pre-parse the command line to check for an alternative config file
+//  3. Load configuration file overwriting defaults with any specified options
+//  4. Parse CLI options and overwrite/add any specified options
 func loadConfig() (*config, error) {
 	defaultCfg := config{
 		LndConnect: &lndConnectConfig{
@@ -106,7 +125,10 @@ func loadConfig() (*config, error) {
 		ConfigFile:  defaultConfigFile,
 		DataDir:     defaultDataDir,
 		TLSCertPath: defaultTLSCertPath,
-		net:         &tor.ClearNet{},
+		Tor: &torConfig{
+			RESTKeyPath: defaultRESTKeyPath,
+		},
+		net: &tor.ClearNet{},
 	}
 
 	// Pre-parse the command line options to pick up an alternative config
@@ -130,6 +152,7 @@ func loadConfig() (*config, error) {
 		}
 		preCfg.DataDir = filepath.Join(lndDir, defaultDataDirname)
 		preCfg.TLSCertPath = filepath.Join(lndDir, defaultTLSCertFilename)
+		preCfg.Tor.RESTKeyPath = filepath.Join(lndDir, defaultRESTKeyFileName)
 	}
 
 	// Next, load any additional configuration options from the file.
@@ -176,7 +199,7 @@ func loadConfig() (*config, error) {
 			networkName = "simnet"
 		}
 		if numNets > 1 {
-			str := "The mainnet, testnet, regtest, and " +
+			str := "the mainnet, testnet, regtest, and " +
 				"simnet params can't be used together -- " +
 				"choose one of the four"
 			err := fmt.Errorf(str)
@@ -255,4 +278,17 @@ func cleanAndExpandPath(path string) string {
 	// NOTE: The os.ExpandEnv doesn't work with Windows-style %VARIABLE%,
 	// but the variables can still be expanded via POSIX-style $VARIABLE.
 	return filepath.Clean(os.ExpandEnv(path))
+}
+
+// updates config with onion host and port
+func updateHostAddrConfig(addr string, loadedConfig *config) error {
+	parsedAddr := strings.Split(addr, ":")
+	loadedConfig.LndConnect.Host = parsedAddr[0]
+	parsedPort, err := strconv.ParseUint(parsedAddr[1], 10, 16)
+	if err != nil {
+		log.Fatal(err)
+	}
+	loadedConfig.LndConnect.Port = uint16(parsedPort)
+	loadedConfig.LndConnect.NoCert = true
+	return nil
 }

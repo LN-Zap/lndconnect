@@ -1,136 +1,90 @@
 package main
 
 import (
-	b64 "encoding/base64"
-	"encoding/pem"
-	"fmt"
-	"io/ioutil"
+	"log"
 	"net"
-	"net/url"
 	"os"
-	"strings"
+	"os/signal"
+	"syscall"
 
-	"github.com/Baozisoftware/qrcode-terminal-go"
-	"github.com/glendc/go-external-ip"
-	"github.com/skip2/go-qrcode"
+	"github.com/lightningnetwork/lnd/tor"
 )
-
-func getLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return ""
-}
-
-func getPublicIP() string {
-	consensus := externalip.DefaultConsensus(nil, nil)
-	ip, err := consensus.ExternalIP()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	return ip.String()
-}
 
 func main() {
 	loadedConfig, err := loadConfig()
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
 
-	displayLink(loadedConfig)
-}
-
-func displayLink(loadedConfig *config) {
-	var err error
-
-	// host
-	ipString := ""
-	if loadedConfig.LndConnect.Host != "" {
-		ipString = loadedConfig.LndConnect.Host
-	} else if loadedConfig.LndConnect.LocalIp {
-		ipString = getLocalIP()
-	} else if loadedConfig.LndConnect.Localhost {
-		ipString = "127.0.0.1"
-	} else {
-		ipString = getPublicIP()
-	}
-
-	ipString = net.JoinHostPort(ipString, fmt.Sprint(loadedConfig.LndConnect.Port))
-
-	u := url.URL{Scheme: "lndconnect", Host: ipString}
-	q := u.Query()
-
-	// cert
-	if !loadedConfig.LndConnect.NoCert {
-		certBytes, err := ioutil.ReadFile(loadedConfig.TLSCertPath)
-		if err != nil {
-			fmt.Println(err)
-			return
+	// If createonion option is selected, tor is active and v3 onion services have been
+	// specified, make a tor controller and pass it into the REST controller server
+	var torController *tor.Controller
+	if loadedConfig.LndConnect.CreateOnion && loadedConfig.Tor.Active && loadedConfig.Tor.V3 {
+		var targetIPAddress string
+		if net.ParseIP(loadedConfig.Tor.TargetIPAddress) == nil {
+			addrs, err := loadedConfig.net.LookupHost(loadedConfig.Tor.TargetIPAddress)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			targetIPAddress = addrs[0]
+			log.Printf(
+				"`tor.targetipaddress` doesn't define an IP address, hostname %s was resolved to %s",
+				loadedConfig.Tor.TargetIPAddress,
+				targetIPAddress,
+			)
+		} else {
+			targetIPAddress = loadedConfig.Tor.TargetIPAddress
 		}
+		torController = tor.NewController(
+			loadedConfig.Tor.Control,
+			targetIPAddress,
+			loadedConfig.Tor.Password,
+		)
 
-		block, _ := pem.Decode(certBytes)
-		if block == nil || block.Type != "CERTIFICATE" {
-			fmt.Println("failed to decode PEM block containing certificate")
+		// Start the tor controller before giving it to any other
+		// subsystems.
+		if err := torController.Start(); err != nil {
+			log.Fatalf("error starting tor controller: %v", err)
 		}
+		defer func() {
+			if err := torController.Stop(); err != nil {
+				log.Printf("error stopping tor controller: %v", err)
+			}
+		}()
 
-		certificate := b64.RawURLEncoding.EncodeToString([]byte(block.Bytes))
-
-		q.Add("cert", certificate)
+		if err := createNewHiddenService(loadedConfig, torController); err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	// macaroon
-	var macBytes []byte
-	if loadedConfig.LndConnect.Invoice {
-		macBytes, err = ioutil.ReadFile(loadedConfig.InvoiceMacPath)
-	} else if loadedConfig.LndConnect.Readonly {
-		macBytes, err = ioutil.ReadFile(loadedConfig.ReadMacPath)
-	} else {
-		macBytes, err = ioutil.ReadFile(loadedConfig.AdminMacPath)
-	}
-
+	// Generate URI
+	uri, err := getURI(loadedConfig)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
 
-	macaroonB64 := b64.RawURLEncoding.EncodeToString([]byte(macBytes))
-
-	q.Add("macaroon", macaroonB64)
-
-	// custom query
-	for _, s := range loadedConfig.LndConnect.Query {
-		queryParts := strings.Split(s, "=")
-
-		if len(queryParts) != 2 {
-			fmt.Println("Invalid Query Argument:", s)
-			return
-		}
-
-		q.Add(queryParts[0], queryParts[1])
-	}
-
-	u.RawQuery = q.Encode()
-
-	// generate link / QR Code
-	if loadedConfig.LndConnect.Url {
-		fmt.Println(u.String())
-	} else if loadedConfig.LndConnect.Image {
-		qrcode.WriteFile(u.String(), qrcode.Medium, 512, "lndconnect-qr.png")
-		fmt.Println("Wrote QR Code to file \"lndconnect-qr.png\"")
+	// Print URI or QR Code to selected output
+	if loadedConfig.LndConnect.URL {
+		log.Println(uri)
 	} else {
-		obj := qrcodeTerminal.New()
-		obj.Get(u.String()).Print()
-		fmt.Println("\n⚠️  Press \"cmd + -\" a few times to see the full QR Code!\nIf that doesn't work run \"lndconnect -j\" to get a code you can copy paste into the app.")
+		err = getQR(uri, loadedConfig.LndConnect.Image)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	if torController != nil {
+		cancelChan := make(chan os.Signal, 1)
+		done := make(chan bool, 1)
+
+		// catch SIGINT, SIGQUIT or SIGETRM
+		signal.Notify(cancelChan, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+
+		go func() {
+			sig := <-cancelChan
+			log.Printf("Caught %v signal", sig)
+			done <- true
+		}()
+		<-done
+		log.Println("lndconnect is shutting down now...")
 	}
 }
